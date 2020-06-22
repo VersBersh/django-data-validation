@@ -1,0 +1,8 @@
+django>=2.2
+django-pytest
+ipython
+nodeenv
+numpy
+pytest
+pytest-cov
+pytest-django

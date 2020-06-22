@@ -1,0 +1,21 @@
+# python
+*.py[cod]
+
+# node
+**/node_modules/
+
+# testing
+*/.pytest_cache/
+*.coverage
+test_proj/_debug.py
+
+# db
+*.sqlite3
+
+# pycharm
+.idea/
+
+# other
+/setup/test_proj.pth
+/tests/test_proj/apps/datavalidation/
+_todo

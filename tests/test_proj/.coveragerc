@@ -1,0 +1,4 @@
+[run]
+source = apps/datavalidation
+omit =
+    apps/datavalidation/migrations/*
