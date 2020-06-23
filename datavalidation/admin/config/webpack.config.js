@@ -521,7 +521,7 @@ module.exports = function(webpackEnv) {
         staticRoot: staticRoot,
         templatePath: paths.appHtml,
         outputDir: paths.djangoTemplateDir,
-        excludes: ['precache-manifest', 'service-worker'],
+        excludes: [/^precache-manifest/, /^service-worker/],
       }),
       // This gives some necessary context to module not found errors, such as
       // the requesting resource.
@@ -643,8 +643,9 @@ module.exports = function(webpackEnv) {
     performance: false,
     watch: isEnvDevelopment,
     watchOptions: {
-      aggregateTimeout: 500,
-      ignored: /node_modules/,
+      aggregateTimeout: 200,
+      poll: true,
+      ignored: /node_modules/
     }
   };
 };

@@ -18,7 +18,7 @@ const options_schema = {
     outputDir: {
       type: 'string',
     },
-    // the names of any assets that could be excluded from index.html
+    // a list of regex that match any assets to be excluded from index.html
     excludes: {
       type: 'array',
     }
@@ -48,10 +48,13 @@ class DjangoTempalatePlugin {
   }
 
   apply(compiler) {
-    compiler.hooks.done.tap('Django Template Plugin', (stats) => {
+    compiler.hooks.emit.tap('Django Template Plugin', (compilation) => {
+      let index = this.template;
+
+      // grab all assets from the compilation
       let assets = Object
-          .keys(stats.compilation.assets)
-          .filter(filename => !this.options.excludes.some(excl => filename.startsWith(excl)));
+          .keys(compilation.assets)
+          .filter(filename => !this.options.excludes.some(excl => filename.match(excl)));
 
       // inject javascript assets
       let js = assets
@@ -60,7 +63,7 @@ class DjangoTempalatePlugin {
             const fullpath = path.join(this.options.staticRoot, filename);
             return `<script src="\{% static "${fullpath}" %\}"></script>`;
           });
-      this.template = this.template.replace("<:BODY:>", js.join("\n"));
+      index = index.replace("<:BODY:>", js.join("\n"));
 
       // inject css assets
       let css = assets
@@ -69,10 +72,10 @@ class DjangoTempalatePlugin {
             const fullpath = path.join(this.options.staticRoot, filename);
             return `<link rel="stylesheet" href="\{% static "${fullpath}" %\}" />`
           });
-      this.template = this.template.replace("<:HEAD:>", css.join("\n"));
+      index = index.replace("<:HEAD:>", css.join("\n"));
 
       const outputPath = path.join(this.options.outputDir, "index.html");
-      fs.writeFileSync(outputPath, this.template);
+      fs.writeFileSync(outputPath, index);
     });
   }
 }
