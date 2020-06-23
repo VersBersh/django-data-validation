@@ -6,7 +6,6 @@ BASE_DIR = Path(__file__).absolute().parent.resolve(strict=True)
 SECRET_KEY = "***REMOVED***"
 
 DEBUG = True
-DATAVALIDATION_DEVELOPMENT = True
 
 ALLOWED_HOSTS = ["django-dev"]
 
@@ -49,49 +48,14 @@ TEMPLATES = [
     },
 ]
 
+STATIC_URL = "/static/"
+
 WSGI_APPLICATION = "test_proj.wsgi.application"
 
 DATABASES = {
-    "sqlite3": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": (BASE_DIR.parent / "db.sqlite3").as_posix(),
-    },
-
-    "postgres": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "ddv",
-        "USER": "***REMOVED***",
-        "PASSWORD": "***REMOVED***",
-        "HOST": "",
-        "PORT": "",
-    }
+    # define in local_settings.py
 }
 
-DATABASES["default"] = DATABASES["postgres"]
-
-
-# # Password validation
-# # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
-#
-# AUTH_PASSWORD_VALIDATORS = [
-#     {
-#         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-#     },
-#     {
-#         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-#     },
-#     {
-#         "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-#     },
-#     {
-#         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-#     },
-# ]
-#
-#
-# # Internationalization
-# # https://docs.djangoproject.com/en/2.2/topics/i18n/
-#
 LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = "Australia/Melbourne"
@@ -100,10 +64,8 @@ USE_I18N = False
 
 USE_L10N = False
 
-#USE_TZ = True
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.2/howto/static-files/
-
-STATIC_URL = "/static/"
+try:
+    # .gitignored overrides
+    from .local_settings import *
+except ImportError:
+    pass
