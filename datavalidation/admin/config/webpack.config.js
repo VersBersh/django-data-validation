@@ -56,8 +56,11 @@ const sassModuleRegex = /\.module\.(scss|sass)$/;
 module.exports = function(webpackEnv) {
   const isEnvDevelopment = webpackEnv === 'development';
   const isEnvProduction = webpackEnv === 'production';
+  if (!isEnvDevelopment && !isEnvProduction) {
+    throw Error("webpackEnv must be 'development' or 'production'");
+  }
 
-  const envDir = isEnvProduction ? "prod" : "dev";
+  const envDir = isEnvDevelopment ? "dev" : "";
   paths.appBuild = path.join(paths.appBuild, envDir);
   paths.djangoTemplateDir = path.join(paths.djangoTemplateDir, envDir);
   const staticRoot = path.join("/static/datavalidation", envDir);

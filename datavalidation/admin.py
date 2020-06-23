@@ -17,12 +17,13 @@ class Summary(models.Model):
 @admin.register(Summary)
 class ValidationAdmin(admin.ModelAdmin):
     def get_urls(self):
-        name = "datavalidation_summary_changelist"
-        is_dev_mode = getattr(settings, "DATAVALIDATION_DEVELOPMENT", False)
-        mode = "dev" if is_dev_mode else "prod"
-        template_name = f"datavalidation/{mode}/index.html"
-        context = {"mode": mode}
-        view = partial(render, template_name=template_name, context=context)
+        if getattr(settings, "DATAVALIDATION_DEVELOPMENT", False):
+            template_name = "datavalidation/dev/index.html"
+        else:
+            template_name = "datavalidation/index.html"
+        view = partial(render, template_name=template_name)
         return [
-            url('', self.admin_site.admin_view(view), name=name)
+            url('',
+                self.admin_site.admin_view(view),
+                name="datavalidation_summary_changelist")
         ]
