@@ -6,6 +6,7 @@ BASE_DIR = Path(__file__).absolute().parent.resolve(strict=True)
 SECRET_KEY = "***REMOVED***"
 
 DEBUG = True
+DATAVALIDATION_DEVELOPMENT = True
 
 ALLOWED_HOSTS = ["django-dev"]
 

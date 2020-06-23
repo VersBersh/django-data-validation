@@ -16,6 +16,8 @@ test_proj/_debug.py
 .idea/
 
 # other
+/datavalidation/static/datavalidation/dev
+/datavalidation/templates/datavalidation/dev
 /setup/test_proj.pth
 /tests/test_proj/apps/datavalidation/
 /_notes
