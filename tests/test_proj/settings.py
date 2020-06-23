@@ -7,7 +7,7 @@ SECRET_KEY = "***REMOVED***"
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["django-dev"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
