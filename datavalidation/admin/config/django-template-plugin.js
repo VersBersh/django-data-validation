@@ -47,31 +47,39 @@ class DjangoTempalatePlugin {
     this.template = fs.readFileSync(options.templatePath, {encoding: "utf8"});
   }
 
-  apply(compiler) {
+  toHTML = (assets, extension, tag, link, attrs = {}) => {
+    return assets
+          .filter(filename => filename.endsWith(extension))
+          .map(filename => {
+            const fullpath = path.join(this.options.staticRoot, filename);
+            const attr_str = Object.entries(attrs).map(([key, val]) => `${key}="${val}"`).join(" ");
+            const link_str = `${link}="\{% static "${fullpath}" %\}"`
+            return `<${tag} ${attr_str} ${link_str}> </${tag}>`;
+          });
+  }
+
+  apply = (compiler) => {
     compiler.hooks.emit.tap('Django Template Plugin', (compilation) => {
       let index = this.template;
+
+      // replace <:STATIC_ROOT:>
+      index = index.replace(/<:STATIC_ROOT:>/g, this.options.staticRoot);
 
       // grab all assets from the compilation
       let assets = Object
           .keys(compilation.assets)
           .filter(filename => !this.options.excludes.some(excl => filename.match(excl)));
 
-      // inject javascript assets
-      let js = assets
-          .filter(filename => filename.endsWith(".js"))
-          .map(filename => {
-            const fullpath = path.join(this.options.staticRoot, filename);
-            return `<script src="\{% static "${fullpath}" %\}"></script>`;
-          });
+      // inject javascript assets into body
+      let js = this.toHTML(assets, ".js", "script", "src")
       index = index.replace("<:BODY:>", js.join("\n"));
+      console.log("compiling django template")
+      console.log(js)
 
-      // inject css assets
-      let css = assets
-          .filter(filename => filename.endsWith(".css"))
-          .map(filename => {
-            const fullpath = path.join(this.options.staticRoot, filename);
-            return `<link rel="stylesheet" href="\{% static "${fullpath}" %\}" />`
-          });
+      // inject css assets into head
+      let css = this.toHTML(
+          assets, ".css", "link", "href", {rel: "stylesheet"}
+          );
       index = index.replace("<:HEAD:>", css.join("\n"));
 
       const outputPath = path.join(this.options.outputDir, "index.html");

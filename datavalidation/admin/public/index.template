@@ -7,6 +7,8 @@
 <meta name="theme-color" content="#000000" />
 <title>Data Validation</title>
 
+<link rel="icon" type="image/x-icon" href={% static "<:STATIC_ROOT:>/favicon.ico" %}>
+
 <:HEAD:>
 
 {%  endblock %}
