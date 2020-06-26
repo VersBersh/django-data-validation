@@ -1,4 +1,4 @@
-import inspect
+from datetime import datetime
 import itertools
 from typing import List, Optional, Type, Iterator, Any, Union
 
@@ -6,9 +6,9 @@ from django.db import models
 from termcolor import colored
 
 from .models import (
-    ExceptionInfoMixin, FailingObjects, ValidationSummary
+    ExceptionInfoMixin, FailingObjects, Validator
 )
-from .registry import REGISTRY, MethodInfo
+from .registry import REGISTRY, ValidatorInfo
 from .results import PASS, FAIL, Result, Summary
 from .utils import queryset_iterator
 
@@ -29,22 +29,22 @@ class ModelValidator:
         self.model_info = REGISTRY[model]
 
         if method_names is None:
-            method_names = self.model_info.methods.keys()  # all validators
+            method_names = self.model_info.validators.keys()  # all validators
         else:
             self._check_method_names(method_names)
 
-        self.classmethodinfos = [
-            self.model_info.methods[name]
+        self.class_validator_infos = [
+            self.model_info.validators[name]
             for name in method_names
-            if self.model_info.methods[name].is_class_method
+            if self.model_info.validators[name].is_class_method
         ]
-        self.instancemethodinfos = [
-            self.model_info.methods[name]
+        self.instance_validator_infos = [
+            self.model_info.validators[name]
             for name in method_names
-            if not self.model_info.methods[name].is_class_method
+            if not self.model_info.validators[name].is_class_method
         ]
         self.instance_summaries = {
-            info: Summary() for info in self.instancemethodinfos
+            info: Summary() for info in self.instance_validator_infos
         }
         self.all_summaries = []
         self.validated = False
@@ -59,29 +59,29 @@ class ModelValidator:
             raise Exception("can only call validate once per instance.")
         else:
             self.validated = True
-        self._validate_instancemethods()
-        self._validate_classmethods()
+        self._run_instance_validators()
+        self._run_class_validators()
         self._print_summaries()
 
     def _check_method_names(self, method_names: List[str]):
-        """ check that the list of method names exist in the model """
-        methods = {
-            method.__name__
-            for method in inspect.getmembers(self.model, predicate=inspect.ismethod)
-        }
+        """ check that the list of method names are data validators """
+        all_validators = self.model_info.validators.keys()
         for method in method_names:
-            if method not in methods:
-                raise ValueError(f"no method {method} on {self.model_info.model_name}")
+            if method not in all_validators:
+                raise ValueError(
+                    f"{method} is not a data_validator on {self.model_info.model_name}"
+                )
 
-    def _validate_instancemethods(self):
+    def _run_instance_validators(self):
         """ run all instance-method data validators """
         # delete failing objects from previous run, but retain objects
         # marked allowed_to_fail and set them as invalid so that field is
         # not lost
-        for method_info in itertools.chain(self.instancemethodinfos, self.classmethodinfos):
+        for vinfo in itertools.chain(self.instance_validator_infos,
+                                     self.class_validator_infos):
             qs = FailingObjects.objects.filter(
                 content_type_id=self.model_info.content_type_id(),
-                method_id=method_info.get_pk()
+                method_id=vinfo.get_pk()
             )
             qs.exclude(allowed_to_fail=True).delete()
             qs.update(valid=False)
@@ -89,69 +89,70 @@ class ModelValidator:
         # iterate over each object in the table and call each data
         # validator on it. When an exception is encountered on a validator,
         # remove it from the list
-        methodinfos = self.instancemethodinfos.copy()
+        ivinfos = self.instance_validator_infos.copy()
         for obj in self.iterate_model_objects():
-            methodinfos = list(
-                self._validate_instancemethods_for_obj(methodinfos, obj)
+            ivinfos = list(
+                self._run_instance_validator_for_obj(ivinfos, obj)
             )
 
         # clean up any remaining invalid FailingObjects
-        for method_info in itertools.chain(self.instancemethodinfos, self.classmethodinfos):
+        for vinfo in itertools.chain(self.instance_validator_infos,
+                                     self.class_validator_infos):
             FailingObjects.objects.filter(
                 content_type_id=self.model_info.content_type_id(),
-                method_id=method_info.get_pk(),
+                method_id=vinfo.get_pk(),
                 valid=False
             ).delete()
 
-        for iminfo, summary in self.instance_summaries.items():
+        for ivinfo, summary in self.instance_summaries.items():
             # skip_failures because we already created the FailingObjects
             summary.complete()
-            self._handle_summary(iminfo, summary, skip_failures=True)
+            self._handle_summary(ivinfo, summary, skip_failures=True)
 
-    def _validate_instancemethods_for_obj(self,
-                                          iminfos: List[MethodInfo],
-                                          obj: models.Model
-                                          ) -> Iterator[MethodInfo]:
+    def _run_instance_validator_for_obj(self,
+                                        ivinfos: List[ValidatorInfo],
+                                        obj: models.Model
+                                        ) -> Iterator[ValidatorInfo]:
         """ run the each data validator on the object """
-        for iminfo in iminfos:
-            exinfo = self._validate_instancemethod(iminfo, obj)
+        for ivinfo in ivinfos:
+            exinfo = self._validate_instance(ivinfo, obj)
             if exinfo is None:
-                yield iminfo
+                yield ivinfo
             else:
                 # stop calling this validator if an exception was hit
-                self.instance_summaries.pop(iminfo)
+                self.instance_summaries.pop(ivinfo)
                 exinfo["exc_obj_pk"] = obj.pk
                 summary = Summary(_exception_info=exinfo).complete()
-                self._handle_summary(iminfo, summary, skip_failures=True)
+                self._handle_summary(ivinfo, summary, skip_failures=True)
 
-    def _validate_instancemethod(self,
-                                 iminfo: MethodInfo,
-                                 obj: models.Model
-                                 ) -> Optional[dict]:
+    def _validate_instance(self,
+                           ivinfo: ValidatorInfo,
+                           obj: models.Model
+                           ) -> Optional[dict]:
         """ call the data validator for a given object
 
          returns: the exception info if there was any
         """
         # noinspection PyBroadException
         try:
-            result = iminfo.method(obj)
+            result = ivinfo.method(obj)
             exinfo = None
         except Exception:
             result = None
             exinfo = ExceptionInfoMixin.get_exception_info()
 
-        return self._handle_result(iminfo, obj, result, exinfo)
+        return self._handle_result(ivinfo, obj, result, exinfo)
 
-    def _validate_classmethods(self):
+    def _run_class_validators(self):
         """ run all class-method validators """
-        for cminfo in self.classmethodinfos:
-            self._validate_classmethod(cminfo)
+        for cvinfo in self.class_validator_infos:
+            self._run_class_validator(cvinfo)
 
-    def _validate_classmethod(self, cminfo: MethodInfo):
+    def _run_class_validator(self, cvinfo: ValidatorInfo):
         # noinspection PyBroadException
         try:
             exinfo = None
-            summary = cminfo.method()
+            summary = cvinfo.method()
             if isinstance(summary, Summary):
                 # just to be sure the user didn't set it
                 summary._exception_info = None
@@ -172,10 +173,10 @@ class ModelValidator:
             summary._exception_info = ExceptionInfoMixin.get_exception_info()
             summary.complete()
 
-        self._handle_summary(cminfo, summary)
+        self._handle_summary(cvinfo, summary)
 
     def _handle_result(self,
-                       method_info: MethodInfo,
+                       method_info: ValidatorInfo,
                        obj: models.Model,
                        result: Union[Result, bool, None],
                        exinfo: Optional[dict]
@@ -224,48 +225,46 @@ class ModelValidator:
         return exinfo
 
     def _handle_summary(self,
-                        method_info: MethodInfo,
+                        vinfo: ValidatorInfo,
                         summary: Optional[Summary],
                         skip_failures: bool = False
                         ) -> Summary:
         """ handle the summary returned by a class-method validator """
-
-        vm = method_info.get_pk()
+        vpk = vinfo.get_pk()
         exinfo = summary._exception_info or {}
-        ValidationSummary.objects.update_or_create(
-            method_id=vm,
-            defaults={
-                "passed": summary.passed,
-                "num_passed": summary.num_passed,
-                "num_failed": summary.num_failed,
-                "num_na": summary.num_na,
-                "num_allowed_to_fail": summary._num_allowed_to_fail,
-                **exinfo,
-            },
+        if summary.passed is not None:
+            exinfo["last_run_time"] = datetime.now()
+        Validator.objects.filter(pk=vpk).update(
+            passed=summary.passed,
+            num_passed=summary.num_passed,
+            num_failed=summary.num_failed,
+            num_na=summary.num_na,
+            num_allowed_to_fail=summary._num_allowed_to_fail,
+            **exinfo,
         )
 
         # if failures were supplied then update the ValidationResult table
         if summary.failures is not None and not skip_failures:
-            ct = method_info.model_info.content_type_id()
+            ct = vinfo.model_info.content_type_id()
             for obj in summary.failures:
                 FailingObjects.objects.update_or_create(
                     object_pk=obj.pk,
                     content_type_id=ct,
-                    method_id=vm,
+                    method_id=vpk,
                     defaults={
                         "comment": None,
                     }
                 )
             summary.failures = [obj.pk for obj in summary.failures[:3]]
-        self.all_summaries.append((method_info, summary))
+        self.all_summaries.append((vinfo, summary))
         return summary
 
     def iterate_model_objects(self, chunk_size: int = 2000) -> Iterator[Any]:
         select_related_lookups = set(itertools.chain(*[
-            info.select_related for info in self.instancemethodinfos
+            info.select_related for info in self.instance_validator_infos
         ]))
         prefetch_related_lookups = set(itertools.chain(*[
-            info.prefetch_related for info in self.instancemethodinfos
+            info.prefetch_related for info in self.instance_validator_infos
         ]))
         queryset = self.model._meta.default_manager \
                        .select_related(*select_related_lookups) \
@@ -273,10 +272,10 @@ class ModelValidator:
         yield from queryset_iterator(queryset, chunk_size)
 
     def _print_summaries(self):
-        for method_info, summary in self.all_summaries:
+        for vinfo, summary in self.all_summaries:
             logger.info(
-                f"\nMETHOD: {method_info.method_name}: {summary.status()}\n"
-                f"'''{method_info.description}'''\n"
+                f"\nMETHOD: {vinfo.method_name}: {summary.status()}\n"
+                f"'''{vinfo.description}'''\n"
                 f"{summary.pretty_print()}\n"
                 f"-------------------------"
             )

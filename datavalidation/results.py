@@ -48,7 +48,7 @@ class Summary:
     _exception_info: Optional[dict] = None
 
     def complete(self) -> "Summary":
-        """ ensure that Summary is consistent and update the passed field"""
+        """ ensure that Summary is consistent and update the passed field """
         if self._exception_info is not None:
             self.passed = None
             self.num_passed = None

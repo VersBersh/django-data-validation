@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 from termcolor import colored
 
 from datavalidation.registry import REGISTRY
-from datavalidation.validatior import ModelValidator
+from datavalidation.validator import ModelValidator
 from datavalidation.utils import timer
 from datavalidation.logging import logger
 

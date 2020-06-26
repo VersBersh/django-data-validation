@@ -12,8 +12,6 @@ from django.db import models
 from .constants import MAX_DESCRIPTION_LEN
 from .utils import is_class_method
 
-from .logging import logger
-
 
 @dataclass
 class _PreLoadMethodInfo:
@@ -24,7 +22,7 @@ class _PreLoadMethodInfo:
 
 
 @dataclass
-class MethodInfo:
+class ValidatorInfo:
     """ information about a data validator. """
     model_info: "ModelInfo"
     method: Callable
@@ -44,8 +42,8 @@ class MethodInfo:
     @lru_cache()
     def get_pk(self) -> int:
         """ return the primary key of the corresponding ValidationMethod """
-        from .models import ValidationMethod
-        obj, _ = ValidationMethod.objects.get_or_create(
+        from .models import Validator
+        obj, _ = Validator.objects.get_or_create(
             content_type_id=self.model_info.content_type_id(),
             method_name=self.method_name,
             defaults={
@@ -61,7 +59,7 @@ class ModelInfo:
     model: Optional[Type[models.Model]] = None
     app_label: str = ""
     model_name: str = ""
-    methods: Dict[str, MethodInfo] = field(default_factory=dict)
+    validators: Dict[str, ValidatorInfo] = field(default_factory=dict)
 
     def __str__(self):
         return f"{self.app_label}.{self.model_name}"
@@ -169,7 +167,7 @@ def update_registry():
             else:
                 description = plinfo.method_name.replace("_", " ").capitalize()
 
-            REGISTRY[model].methods[plinfo.method_name] = MethodInfo(
+            REGISTRY[model].validators[plinfo.method_name] = ValidatorInfo(
                 model_info=model_info,
                 method=method,
                 method_name=plinfo.method_name,
