@@ -53,12 +53,9 @@ class ExceptionInfoMixin(models.Model):
 
 class Validator(ExceptionInfoMixin, models.Model):
     """ methods that are data validators """
-    content_type = models.ForeignKey(
-        ContentType,
-        on_delete=models.CASCADE,
-        related_name='+',
-    )
-    method_name = models.CharField(max_length=80)
+    app_label = models.CharField(max_length=100)
+    model_name = models.CharField(max_length=100)
+    method_name = models.CharField(max_length=100)
     description = models.TextField(max_length=MAX_DESCRIPTION_LEN)
     is_class_method = models.BooleanField()
 
@@ -68,6 +65,12 @@ class Validator(ExceptionInfoMixin, models.Model):
     num_failed = models.PositiveIntegerField(blank=True, null=True)
     num_na = models.PositiveIntegerField(blank=True, null=True)
     num_allowed_to_fail = models.PositiveIntegerField(blank=True, null=True)
+
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        related_name='+',
+    )
 
     class Meta:
         index_together = ("content_type", "method_name")
@@ -87,19 +90,13 @@ class Validator(ExceptionInfoMixin, models.Model):
 
 class FailingObjects(models.Model):
     """ objects that did not pass data validation """
-    content_type = models.ForeignKey(
-        ContentType,
-        on_delete=models.CASCADE,
-        related_name='+'
-    )
-    object_pk = models.PositiveIntegerField()
-
     method = models.ForeignKey(
         Validator,
         on_delete=models.CASCADE,
         related_name="failing_objects",
         db_index=True,
     )
+    object_pk = models.PositiveIntegerField()
 
     comment = models.TextField(max_length=MAX_RESULT_COMMENT_LEN)
 
@@ -112,8 +109,8 @@ class FailingObjects(models.Model):
     valid = models.BooleanField()
 
     class Meta:
-        index_together = ("content_type", "object_pk", "method")
-        unique_together = ("content_type", "object_pk", "method")
+        index_together = ("method", "object_pk")
+        unique_together = ("method", "object_pk")
 
     def __str__(self):
         return f"ValidationResult: {self.method.method_name} ({self.object_pk})"

@@ -47,7 +47,10 @@ class ValidatorInfo:
             content_type_id=self.model_info.content_type_id(),
             method_name=self.method_name,
             defaults={
-                "is_class_method": self.is_class_method
+                "app_label": self.model_info.app_label,
+                "model_name": self.model_info.model_name,
+                "is_class_method": self.is_class_method,
+                "description": self.description,
             }
         )
         return obj.pk
