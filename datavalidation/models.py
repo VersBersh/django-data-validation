@@ -20,7 +20,7 @@ class ExceptionInfoMixin(models.Model):
         blank=True, null=True,
         default=None
     )
-    traceback = models.TextField(
+    exc_traceback = models.TextField(
         max_length=MAX_TRACEBACK_LEN,
         blank=True, null=True,
         default=None
@@ -47,7 +47,7 @@ class ExceptionInfoMixin(models.Model):
                 break
         return dict(
             exc_type=repr(exc),
-            traceback=tb_str
+            exc_traceback=tb_str
         )
 
 
