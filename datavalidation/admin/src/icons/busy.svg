@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="16" viewBox="0 0 24 24">
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 24 24">
   <g>
-    <circle cx="12" cy="12" r="9"
+    <circle cx="12" cy="12" r="11"
             fill="#f57c00"
             stroke="#cc6600"
-            stroke-width="2"/>
+            stroke-width="0" />
 
     <circle cx="8" cy="12" r="1" fill="white"> 
         <animate attributeName="visibility" 

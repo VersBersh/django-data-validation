@@ -2,16 +2,16 @@ import sys
 import traceback
 from typing import Optional, Dict
 
+import enumfields
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 from .constants import (
     MAX_DESCRIPTION_LEN,
-    MAX_RESULT_COMMENT_LEN,
     MAX_TRACEBACK_LEN,
 )
 from .registry import REGISTRY, ModelInfo
-from .results import Summary
+from .results import Status
 
 
 class ExceptionInfoMixin(models.Model):
@@ -60,11 +60,10 @@ class Validator(ExceptionInfoMixin, models.Model):
     is_class_method = models.BooleanField()
 
     last_run_time = models.DateTimeField(blank=True, null=True)
-    passed = models.BooleanField(blank=True, null=True)
-    num_passed = models.PositiveIntegerField(blank=True, null=True)
-    num_failed = models.PositiveIntegerField(blank=True, null=True)
+    status = enumfields.EnumIntegerField(Status, default=Status.UNINITIALIZED)
+    num_passing = models.PositiveIntegerField(blank=True, null=True)
+    num_failing = models.PositiveIntegerField(blank=True, null=True)
     num_na = models.PositiveIntegerField(blank=True, null=True)
-    num_allowed_to_fail = models.PositiveIntegerField(blank=True, null=True)
 
     content_type = models.ForeignKey(
         ContentType,
@@ -75,10 +74,14 @@ class Validator(ExceptionInfoMixin, models.Model):
     class Meta:
         index_together = ("content_type", "method_name")
         unique_together = ("content_type", "method_name")
+        ordering = ("app_label", "model_name", "method_name")
 
     def __str__(self):
-        status = Summary.status(self, colour=False)  # noqa
-        return f"ValidationSummary {self.method_name}: {status}"
+        return f"Validator {self.method_name}: {self.status.name}"
+
+    @property
+    def num_allowed_to_fail(self):
+        return self.failing_objects.filter(allowed_to_fail=True).count()
 
     @property
     def model_info(self) -> Optional[ModelInfo]:
@@ -88,9 +91,9 @@ class Validator(ExceptionInfoMixin, models.Model):
             return REGISTRY[model]
 
 
-class FailingObjects(models.Model):
+class FailingObject(models.Model):
     """ objects that did not pass data validation """
-    method = models.ForeignKey(
+    validator = models.ForeignKey(
         Validator,
         on_delete=models.CASCADE,
         related_name="failing_objects",
@@ -98,10 +101,11 @@ class FailingObjects(models.Model):
     )
     object_pk = models.PositiveIntegerField()
 
-    comment = models.TextField(max_length=MAX_RESULT_COMMENT_LEN)
+    comment = models.TextField(blank=True)
 
-    # manual entry by User - this test is allowed to fail
+    # manual entry by User - this object is allowed to fail validation
     allowed_to_fail = models.BooleanField(default=False)
+    allowed_to_fail_justification = models.TextField(blank=True)
 
     # control variable: existing records are marked as invalid prior to
     # running the validation so that objects that have been marked
@@ -109,8 +113,9 @@ class FailingObjects(models.Model):
     valid = models.BooleanField()
 
     class Meta:
-        index_together = ("method", "object_pk")
-        unique_together = ("method", "object_pk")
+        index_together = ("validator", "object_pk")
+        unique_together = ("validator", "object_pk")
+        ordering = ("object_pk",)
 
     def __str__(self):
-        return f"ValidationResult: {self.method.method_name} ({self.object_pk})"
+        return f"FailingObject: {self.validator.method_name} ({self.object_pk})"

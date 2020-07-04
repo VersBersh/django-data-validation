@@ -1,15 +1,30 @@
-from rest_framework.serializers import ModelSerializer
+from django.urls import reverse, NoReverseMatch
+from enumfields.drf import EnumSupportSerializerMixin
+from rest_framework import serializers
 
-from .models import Validator, FailingObjects
+from .models import Validator, FailingObject
 
 
-class FailingObjectSerializer(ModelSerializer):
+class FailingObjectSerializer(serializers.ModelSerializer):
     class Meta:
-        model = FailingObjects
-        fields = "__all__"
+        model = FailingObject
+        exclude = ("valid",)
+
+    admin_page = serializers.SerializerMethodField("get_admin_page")
+
+    @staticmethod
+    def get_admin_page(obj: FailingObject):
+        app_label = obj.validator.app_label.lower()
+        model_name = obj.validator.model_name.lower()
+        try:
+            return reverse(f"admin:{app_label}_{model_name}_change", args=(obj.object_pk,))
+        except NoReverseMatch:
+            return ""
 
 
-class ValidatorSerializer(ModelSerializer):
+class ValidatorSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Validator
-        fields = "__all__"
+        exclude = ("content_type",)
+
+    num_allowed_to_fail = serializers.ReadOnlyField()

@@ -5,8 +5,10 @@ from django.conf.urls import url
 from django.contrib import admin
 from django.db import models
 from django.shortcuts import render
+from django.urls import include
 
-from .viewsets import FailingObjectViewSet, ValidatorViewSet
+from .viewsets import router
+from .views import object_counts, csrf_info
 
 
 class Summary(models.Model):
@@ -26,13 +28,8 @@ class ValidationAdmin(admin.ModelAdmin):
             template_name = "datavalidation/index.html"
         view = partial(render, template_name=template_name)
         return [
-            url(r'api/failing_list$',
-                admin_view(FailingObjectViewSet.as_view({"get": "list"})),
-                name="datavalidation_summary_failing_list"),
-            url(r'api/list$',
-                admin_view(ValidatorViewSet.as_view({"get": "list"})),
-                name="datavalidation_summary_list"),
-            url(r'',
-                admin_view(view),
-                name="datavalidation_summary_changelist"),
+            url(r'^api/', include(router.urls)),
+            url(r'^api/meta/csrf', csrf_info),
+            url(r'^api/meta/object-counts', object_counts),
+            url(r'^', admin_view(view), name="datavalidation_summary_changelist"),
         ]

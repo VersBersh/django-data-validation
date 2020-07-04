@@ -1,15 +1,15 @@
 from datetime import datetime
 import itertools
-from typing import List, Optional, Type, Iterator, Any, Union
+from typing import List, Optional, Type, Iterator, Any
 
 from django.db import models
 from termcolor import colored
 
 from .models import (
-    ExceptionInfoMixin, FailingObjects, Validator
+    ExceptionInfoMixin, FailingObject, Validator
 )
 from .registry import REGISTRY, ValidatorInfo
-from .results import PASS, FAIL, Result, Summary
+from .results import PASS, FAIL, NA, Result, SummaryEx, Status
 from .utils import queryset_iterator
 
 from .logging import logger
@@ -44,7 +44,7 @@ class ModelValidator:
             if not self.model_info.validators[name].is_class_method
         ]
         self.instance_summaries = {
-            info: Summary() for info in self.instance_validator_infos
+            info: SummaryEx() for info in self.instance_validator_infos
         }
         self.all_summaries = []
         self.validated = False
@@ -79,7 +79,7 @@ class ModelValidator:
         # not lost
         for valinfo in itertools.chain(self.instance_validator_infos,
                                        self.class_validator_infos):
-            qs = FailingObjects.objects.filter(method_id=valinfo.get_pk())
+            qs = FailingObject.objects.filter(validator_id=valinfo.get_pk())
             qs.exclude(allowed_to_fail=True).delete()
             qs.update(valid=False)
 
@@ -95,8 +95,8 @@ class ModelValidator:
         # clean up any remaining invalid FailingObjects
         for valinfo in itertools.chain(self.instance_validator_infos,
                                        self.class_validator_infos):
-            FailingObjects.objects.filter(
-                method_id=valinfo.get_pk(), valid=False
+            FailingObject.objects.filter(
+                validator_id=valinfo.get_pk(), valid=False
             ).delete()
 
         for valinfo, summary in self.instance_summaries.items():
@@ -117,7 +117,7 @@ class ModelValidator:
                 # stop calling this validator if an exception was hit
                 self.instance_summaries.pop(valinfo)
                 exinfo["exc_obj_pk"] = obj.pk
-                summary = Summary(_exception_info=exinfo).complete()
+                summary = SummaryEx(exception_info=exinfo).complete()
                 self._handle_summary(valinfo, summary, skip_failures=True)
 
     def _validate_instance(self,
@@ -146,52 +146,61 @@ class ModelValidator:
     def _run_class_validator(self, valinfo: ValidatorInfo):
         # noinspection PyBroadException
         try:
-            exinfo = None
-            summary = valinfo.method()
-            if isinstance(summary, Summary):
-                # just to be sure the user didn't set it
-                summary._exception_info = None
-                summary._num_allowed_to_fail = 0
+            returnval = valinfo.method()
+            summary = SummaryEx.from_return_value(returnval)
         except Exception:
             exinfo = ExceptionInfoMixin.get_exception_info()
-            summary = Summary(_exception_info=exinfo).complete()
-
-        if exinfo is None and not isinstance(summary, Summary):
-            summary = Summary(_exception_info={
-                "exc_type": "TypeError('classmethod data validators must "
-                            "return a datavalidator.Summary')"
-            })
+            summary = SummaryEx(exception_info=exinfo).complete()
 
         try:
             summary.complete()
         except AssertionError:
-            summary._exception_info = ExceptionInfoMixin.get_exception_info()
-            summary.complete()
+            exinfo = ExceptionInfoMixin.get_exception_info()
+            summary = SummaryEx(exception_info=exinfo).complete()
 
         self._handle_summary(valinfo, summary)
 
     def _handle_result(self,
                        method_info: ValidatorInfo,
                        obj: models.Model,
-                       result: Union[Result, bool, None],
+                       result: Optional[Result],
                        exinfo: Optional[dict]
                        ) -> Optional[dict]:
         """ handle the result returned by an instance-method validator """
-        extra_result_args = {}
         summary = self.instance_summaries[method_info]
-        if isinstance(result, Result):
-            # update the summary for each method
-            if result == PASS:
-                summary.num_passed += 1
-            elif result == FAIL:
-                summary.num_failed += 1
-            else:
-                summary.num_na += 1
 
-            if result.comment:
-                extra_result_args["comment"] = result.comment
+        if result is PASS or isinstance(result, PASS):
+            summary.num_passing += 1
+        elif result is NA or isinstance(result, NA):
+            summary.num_na += 1
+        elif result is FAIL or isinstance(result, FAIL):
+            summary.num_failing += 1
+
+            # save the failing object
+            extra_result_args = {}
+
             if result.allowed_to_fail is not None:
                 extra_result_args["allowed_to_fail"] = result.allowed_to_fail
+                if result.comment:
+                    extra_result_args["allowed_to_fail_justification"] = result.comment
+            elif result.comment:
+                extra_result_args["comment"] = result.comment
+
+            fobj, _ = FailingObject.objects.update_or_create(
+                validator_id=method_info.get_pk(),
+                object_pk=obj.pk,
+                defaults={
+                    "valid": True,
+                    **extra_result_args,
+                }
+            )
+            summary.failures.append(fobj.pk)
+
+            # if the object was (previously) marked as allowed to fail then
+            # update the current summary
+            if fobj.allowed_to_fail:
+                summary.num_allowed_to_fail += 1
+
         elif exinfo is None:
             exinfo = {
                 "exc_type": "TypeError('data validators must return datavalidator.PASS, "
@@ -199,55 +208,36 @@ class ModelValidator:
                 "exc_obj_pk": obj.pk,
             }
 
-        if result == FAIL:
-            fobj, _ = FailingObjects.objects.update_or_create(
-                method_id=method_info.get_pk(),
-                object_pk=obj.pk,
-                defaults={
-                    "valid": True,
-                    **extra_result_args,
-                }
-            )
-            if len(summary.failures) < 3:
-                summary.failures.append(fobj.pk)
-
-            # if the object was (previously) marked as allowed to fail then
-            # update the current summary
-            if fobj.allowed_to_fail:
-                summary._num_allowed_to_fail += 1
-
         return exinfo
 
     def _handle_summary(self,
                         valinfo: ValidatorInfo,
-                        summary: Optional[Summary],
+                        summary: Optional[SummaryEx],
                         skip_failures: bool = False
-                        ) -> Summary:
+                        ) -> SummaryEx:
         """ handle the summary returned by a class-method validator """
         vpk = valinfo.get_pk()
-        exinfo = summary._exception_info or {}
-        if summary.passed is not None:
+        exinfo = summary.exception_info or {}
+        if summary.status == Status.EXCEPTION:
             exinfo["last_run_time"] = datetime.now()
         Validator.objects.filter(pk=vpk).update(
-            passed=summary.passed,
-            num_passed=summary.num_passed,
-            num_failed=summary.num_failed,
+            status=summary.status,
+            num_passing=summary.num_passing,
+            num_failing=summary.num_failing,
             num_na=summary.num_na,
-            num_allowed_to_fail=summary._num_allowed_to_fail,
             **exinfo,
         )
 
         # if failures were supplied then update the ValidationResult table
         if summary.failures is not None and not skip_failures:
-            for obj in summary.failures:
-                FailingObjects.objects.update_or_create(
-                    method_id=vpk,
-                    object_pk=obj.pk,
+            for pk in summary.failures:
+                FailingObject.objects.update_or_create(
+                    validator_id=vpk,
+                    object_pk=pk,
                     defaults={
-                        "comment": None,
+                        "comment": "",
                     }
                 )
-            summary.failures = [obj.pk for obj in summary.failures[:3]]
         self.all_summaries.append((valinfo, summary))
         return summary
 
@@ -266,7 +256,7 @@ class ModelValidator:
     def _print_summaries(self):
         for valinfo, summary in self.all_summaries:
             logger.info(
-                f"\nMETHOD: {valinfo.method_name}: {summary.status()}\n"
+                f"\nMETHOD: {valinfo.method_name}: {summary.print_status()}\n"
                 f"'''{valinfo.description}'''\n"
                 f"{summary.pretty_print()}\n"
                 f"-------------------------"

@@ -32,10 +32,16 @@ class TestModel(models.Model):
         for obj in cls.objects.all():
             if obj.even_number % 2 != 0:
                 failures.append(obj.pk)
-                summary.num_failed += 1
+                summary.num_failing += 1
             else:
-                summary.num_passed += 1
+                summary.num_passing += 1
         return summary
+
+    @classmethod
+    @data_validator
+    def simple_class_validator(cls):
+        """ just return PASS """
+        return PASS
 
     @data_validator
     def test_limit(self):
@@ -46,10 +52,10 @@ class TestModel(models.Model):
         """
         if self.even_number <= self.limit:
             return PASS
-        elif self.limit - self.even_number == 1:
+        elif self.even_number - self.limit == 1:
             return FAIL("within tolerance", allowed_to_fail=True)
         else:
-            return FAIL
+            return FAIL("outside tolerance")
 
     @classmethod
     @data_validator
@@ -58,10 +64,10 @@ class TestModel(models.Model):
         last_num = None
         for obj in cls.objects.order_by("pk"):
             if last_num and obj.even_number < last_num:
-                return Summary(passed=True)
+                return PASS
             last_num = obj.even_number
         else:
-            return Summary(passed=False)
+            return FAIL
 
     @classmethod
     @data_validator

@@ -1,15 +1,86 @@
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
+}
+
+/* unset some django defaults
+*/
+td, th {
+    border: none;
+    font-size: inherit;
+    padding: 0 5px !important;
+    vertical-align: inherit;
+}
+
+/* like the row of a table with elements
+ * centered in the middle of each cell
+ */
+.vertical-align {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+/* trim long text and add ellipsis rather
+ * to prevent content overflow
+ */
+.no-overflow {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* small italic grey text for hints
+*/
+.small-text {
+    color: #a5a5a5;
+    font-size: 9pt;
+    font-style: italic;
+    font-weight: normal;
+}
+
+/* a div that acts like a textarea. Must also set
+ * the content-editable attribute of the div
+ */
+.textarea-div {
+    padding: 5px;
+    min-height: 40px;
+    height: 100%;
+    background: #fff;
+    border: 1px solid grey;
+    border-radius: 2px;
+    font-weight: normal;
+}
+
+/* enable placeholder text in the textarea-div. Must
+ * set the placeholder attribute on the div
+ */
+.textarea-div:empty:before {
+    content: attr(placeholder);
+    color: #a5a5a5;
+    font-style: italic;
+    pointer-events: none;
+    display: block;
+}
+
+/* */
+.point-on-hover {
+    cursor: pointer;
+}
+
+.icon {
+    width: 18px;
+    height: 18px;
+    margin: 0 5px;
 }
 
 #root {

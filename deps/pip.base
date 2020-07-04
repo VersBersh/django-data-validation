@@ -1,4 +1,4 @@
 dataclasses
 django-enumfields>=2.0.0
-django-rest-framework
+django-rest-framework>=3.1
 termcolors

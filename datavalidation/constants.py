@@ -9,10 +9,5 @@ MAX_DESCRIPTION_LEN = getattr(settings,
                               "DATA_VALIDATION_MAX_DESCRIPTION_LEN",
                               100)
 
-# the maximum length of a comment returned in a ValidationResult
-# i.e. ValidationResult.Fail(comment="because xyz...")
-MAX_RESULT_COMMENT_LEN = getattr(settings,
-                                 "DATA_VALIDATION_MAX_RESULT_COMMENT_LEN",
-                                 250)
 
 MAX_TRACEBACK_LEN = 2000

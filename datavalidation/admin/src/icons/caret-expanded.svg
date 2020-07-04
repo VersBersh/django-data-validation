@@ -5,6 +5,5 @@
       fill="none"
       stroke-width="2"
       stroke-linecap="round"
-      transform="rotate(-90, 12, 12)"
-    />
+      transform="rotate(-90, 12, 12)" />
 </svg>
