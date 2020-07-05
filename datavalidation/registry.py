@@ -43,7 +43,7 @@ class ValidatorInfo:
     def get_pk(self) -> int:
         """ return the primary key of the corresponding ValidationMethod """
         from .models import Validator
-        obj, _ = Validator.objects.get_or_create(
+        obj, _ = Validator.objects.update_or_create(
             content_type_id=self.model_info.content_type_id(),
             method_name=self.method_name,
             defaults={
@@ -59,9 +59,9 @@ class ValidatorInfo:
 @dataclass
 class ModelInfo:
     """ information about a model with data validator methods. """
-    model: Optional[Type[models.Model]] = None
-    app_label: str = ""
-    model_name: str = ""
+    model: Optional[Type[models.Model]]
+    app_label: str
+    model_name: str
     validators: Dict[str, ValidatorInfo] = field(default_factory=dict)
 
     def __str__(self):
@@ -79,7 +79,7 @@ class ModelInfo:
 # temporary registry for initialization
 _REGISTRY: DefaultDict[Tuple[str, str], List[_PreLoadMethodInfo]] = defaultdict(list)
 
-REGISTRY: DefaultDict[Type[models.Model], ModelInfo] = defaultdict(ModelInfo)
+REGISTRY: Dict[Type[models.Model], ModelInfo] = {}
 
 
 def data_validator(_method: Optional[Callable] = None,
@@ -156,10 +156,11 @@ def update_registry():
     global REGISTRY
     for (app_label, model_name), preload_infos in _REGISTRY.items():
         model = apps.get_model(app_label, model_name)
-        model_info = REGISTRY[model]
-        model_info.model = model
-        model_info.app_label = app_label
-        model_info.model_name = model_name
+        REGISTRY[model] = model_info = ModelInfo(
+            model=model,
+            app_label=app_label,
+            model_name=model_name,
+        )
         for plinfo in preload_infos:
             method = getattr(model, plinfo.method_name)
 
@@ -168,9 +169,9 @@ def update_registry():
             if docstring:
                 description = docstring.split("\n\n")[0]
             else:
-                description = plinfo.method_name.replace("_", " ").capitalize()
+                description = plinfo.method_name.replace("_", " ")
 
-            REGISTRY[model].validators[plinfo.method_name] = ValidatorInfo(
+            model_info.validators[plinfo.method_name] = ValidatorInfo(
                 model_info=model_info,
                 method=method,
                 method_name=plinfo.method_name,
