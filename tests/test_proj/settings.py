@@ -3,7 +3,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).absolute().parent.resolve(strict=True)
 
-SECRET_KEY = "***REMOVED***"
+SECRET_KEY = "!+z68rd0to2^9!=s_(b7^u%px(hf6m9)xg)pt8gks%olk2mth6"
 
 DEBUG = True
 

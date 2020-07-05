@@ -1,9 +1,12 @@
+from typing import List, Tuple
+
 from django.apps import apps
 from django.core.management.base import BaseCommand
 from termcolor import colored
 
-from datavalidation.registry import REGISTRY
-from datavalidation.validator import ModelValidator
+from datavalidation.registry import REGISTRY, ValidatorInfo
+from datavalidation.results import SummaryEx
+from datavalidation.validator import ModelValidationRunner
 from datavalidation.utils import timer
 from datavalidation.logging import logger
 
@@ -30,6 +33,19 @@ class Command(BaseCommand):
                 if model not in REGISTRY:
                     raise ValueError(f"{model.__name__} has no data validators")
 
-        for validator in [ModelValidator(model) for model in models]:
-            validator.validate()
+        # init runners first so that they can validate the inputs
+        runners = [ModelValidationRunner(model) for model in models]
 
+        for runner in runners:
+            summaries = runner.run()
+            self.print_summaries(summaries)
+
+    @staticmethod
+    def print_summaries(summaries: List[Tuple[ValidatorInfo, SummaryEx]]):
+        for valinfo, summary in summaries:
+            logger.info(
+                f"\nMETHOD: {valinfo.method_name}: {summary.print_status()}\n"
+                f'"""{valinfo.description}"""\n'
+                f"{summary.pretty_print()}\n"
+                f"-------------------------"
+            )

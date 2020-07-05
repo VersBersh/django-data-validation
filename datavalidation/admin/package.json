@@ -127,7 +127,7 @@
       "^.+\\.module\\.(css|sass|scss)$"
     ],
     "modulePaths": [
-      "/home/***REMOVED***/.pyenv/versions/3.6.9/envs/ddv/lib/node_modules"
+      "/home/ochambers/.pyenv/versions/3.6.9/envs/ddv/lib/node_modules"
     ],
     "moduleNameMapper": {
       "^react-native$": "react-native-web",

@@ -51,7 +51,7 @@ def queryset_iterator(queryset: models.QuerySet, chunk_size: int):
 
 
 def timer(output: Callable):
-    """ decorator to record the executino time of a function """
+    """ decorator to record the execution time of a function """
     def wrapper(func: Callable) -> Callable:
         @wraps(func)
         def inner(*args, **kwargs):
