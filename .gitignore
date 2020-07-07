@@ -7,7 +7,6 @@
 # testing
 */.pytest_cache/
 *.coverage
-test_proj/_debug.py
 
 # db
 *.sqlite3
@@ -20,7 +19,7 @@ test_proj/_debug.py
 /datavalidation/static/datavalidation/dev
 /datavalidation/templates/datavalidation/dev
 /setup/test_proj.pth
-/tests/test_proj/_debug.py
-/tests/test_proj/local_settings.py
-/tests/test_proj/apps/datavalidation/
-/tests/test_proj/htmlcov/
+/test_proj/_debug.py
+/test_proj/local_settings.py
+/test_proj/apps/datavalidation/
+/test_proj/htmlcov/
