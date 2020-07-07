@@ -134,9 +134,10 @@ def _data_validator(select_related: Union[Sequence, str, None] = None,
         method_name = method.__name__
         app_label = getattr(method, "__module__", "").split(".")[0]
         qualname = getattr(method, "__qualname__", "")
-        # hack: methods defined on classes have "." in their qualified name
-        if "." not in qualname:
-            raise ValueError(f"data validators must be methods of a class: {method_name}")
+        # hack: methods defined on classes have "." in their qualified name,
+        # and methods defined within other functions have "<locals>"
+        if "." not in qualname or "<locals>" in qualname:
+            raise ValueError("data validators must be methods of a class")
         model_name = qualname.split(".")[0]
         # nb. we cannot find the content types until all models are loaded,
         # so this just stores the app labels, model names and method names.
@@ -167,7 +168,7 @@ def update_registry():
             # read the description from the doc string
             docstring = inspect.getdoc(method)
             if docstring:
-                description = docstring.split("\n\n")[0]
+                description = docstring.split("\n\n")[0].rstrip()
             else:
                 description = plinfo.method_name.replace("_", " ")
 

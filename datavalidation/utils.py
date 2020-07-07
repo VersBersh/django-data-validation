@@ -1,5 +1,6 @@
 from functools import wraps
 import itertools
+import sys
 import time
 
 import inspect
@@ -15,18 +16,18 @@ def is_class_method(method: Callable, owner: Type) -> bool:
     return inspect.ismethod(method) and getattr(method, "__self__", None) is owner
 
 
-def get_date_modified_field_name(model: Type[models.Model]) -> Optional[str]:
-    """ return the field of the model that hold the date modified """
-    # first check if the user specified it in the Meta class
-    field_name = getattr(model._meta, "date_modified_field", None)
-    if field_name is not None:
-        assert hasattr(model, field_name), f"{model.__name__} has no field {field_name}"
-        return field_name
-
-    # else return an auto_now field
-    for field in model._meta.fields:
-        if getattr(field, "auto_now", False):
-            return field.name
+# def get_date_modified_field_name(model: Type[models.Model]) -> Optional[str]:
+#     """ return the field of the model that hold the date modified """
+#     # first check if the user specified it in the Meta class
+#     field_name = getattr(model._meta, "date_modified_field", None)
+#     if field_name is not None:
+#         assert hasattr(model, field_name), f"{model.__name__} has no field {field_name}"
+#         return field_name
+#
+#     # else return an auto_now field
+#     for field in model._meta.fields:
+#         if getattr(field, "auto_now", False):
+#             return field.name
 
 
 # noinspection PyProtectedMember
@@ -62,4 +63,12 @@ def timer(output: Callable):
             output(f"Total Execution Time: {duration/1000:.1}s")
             return ret
         return inner
+    return wrapper
+
+
+def sysexit(func: Callable) -> Callable:
+    """ use the function return value as the system exit code """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        sys.exit(func(*args, **kwargs))
     return wrapper

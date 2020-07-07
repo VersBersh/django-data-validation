@@ -1,9 +1,9 @@
 from dataclasses import dataclass, field
 import enum
-from typing import List, Optional, Union, Any
+from typing import List, Optional, Union, Any, NewType, Type
 
 from django.db.models import Model, QuerySet
-from termcolor import colored
+from termcolor import colored as coloured
 
 
 class Status(enum.Enum):
@@ -12,6 +12,19 @@ class Status(enum.Enum):
     FAILING = 2
     EXCEPTION = 3
     WARNING = 4
+
+    @property
+    def colour(self) -> str:
+        if self == Status.UNINITIALIZED:
+            return "white"
+        if self == Status.PASSING:
+            return "green"
+        elif self == Status.FAILING:
+            return "red"
+        elif self == Status.EXCEPTION:
+            return "grey"
+        elif self == Status.WARNING:
+            return "yellow"
 
 
 @dataclass
@@ -32,6 +45,9 @@ class NA(Result):
     pass
 
 
+ResultType = NewType("ResultType", Union[bool, Result, Type[Result]])
+
+
 @dataclass
 class Summary:
     num_passing: Optional[int] = 0
@@ -43,15 +59,37 @@ class Summary:
 # internal use only
 @dataclass
 class SummaryEx(Summary):
+    """ Summary Extended (keep some methods away from the user) """
     status: Optional[Status] = None
     num_allowed_to_fail: Optional[int] = 0
     exception_info: Optional[dict] = None
 
+    def __eq__(self, other):
+        # only used during testing
+        for prop, val in self.__dict__.items():
+            if prop == "failures" and val is not None:
+                if sorted(val) != sorted(other.failures):
+                    return False
+            elif prop == "exception_info" and val is not None:
+                if type(val) is not type(other.exception_info):  # noqa
+                    return False
+                if sorted(val.items()) != sorted(other.exception_info.items()):
+                    return False
+            elif val != getattr(other, prop):
+                return False
+        else:
+            return True
+
     @classmethod
     def from_summary(cls, summary: Summary) -> "SummaryEx":
+        for attr in ("num_passing", "num_failing", "num_na"):
+            if not type(getattr(summary, attr)) is int:
+                raise TypeError(f"Summary.{attr} must be an int")
+        if not isinstance(summary.failures, (QuerySet, list)):
+            raise TypeError("Summary.failures must be a QuerySet, or list")
         summary_ex = cls()
         summary_ex.__dict__.update(summary.__dict__)
-        return summary_ex
+        return summary_ex.complete()
 
     @classmethod
     def from_return_value(cls, returnval: Any) -> "SummaryEx":
@@ -60,27 +98,28 @@ class SummaryEx(Summary):
 
          class methods may return:
             - an instance of Summary,
-            - PASS or FAIL, or
+            - PASS or FAIL,
+            - True or False, or
             - a QuerySet, list of objects or list of primary keys that
               represent the objects that are failing the test
         """
         if isinstance(returnval, Summary):
             return cls.from_summary(returnval)
-        elif returnval is PASS or isinstance(returnval, PASS):
+        elif returnval is True or returnval is PASS or isinstance(returnval, PASS):
             return SummaryEx(status=Status.PASSING, num_passing=None,
                              num_failing=None, num_na=None,
                              num_allowed_to_fail=None)
-        elif returnval is FAIL or isinstance(returnval, FAIL):
+        elif returnval is False or returnval is FAIL or isinstance(returnval, FAIL):
             return SummaryEx(status=Status.FAILING, num_passing=None,
                              num_failing=None, num_na=None,
                              num_allowed_to_fail=None)
         elif isinstance(returnval, (QuerySet, list)):
-            return SummaryEx(failures=returnval)
+            return SummaryEx(failures=returnval).complete()
         else:
-            raise ValueError(
+            raise TypeError(
                 f"{type(returnval)} is not a permissible return value for "
                 f"a classmethod validator. Permissible types are: "
-                f"datavalidator.Summary, datavalidator.PASS, "
+                f"datavalidator.Summary, True, False, datavalidator.PASS, "
                 f"datavalidator.FAIL, django.db.models.QuerySet, a list "
                 f"(of objects or object ids)"
             )
@@ -103,7 +142,7 @@ class SummaryEx(Summary):
 
         for attr in ("num_passing", "num_failing", "num_na", "failures"):
             if getattr(self, attr) is None:
-                raise AssertionError(f"Summary.{attr} is None")
+                raise TypeError(f"Summary.{attr} is None")
 
         if self.num_failing == 0:
             self.num_failing = len(self.failures)
@@ -124,7 +163,7 @@ class SummaryEx(Summary):
             "list of primary keys"
         )
         if isinstance(self.failures, QuerySet):
-            return list(self.failures.values("pk", flat=True))
+            return list(self.failures.values_list("pk", flat=True))
         elif isinstance(self.failures, list):
             if len(self.failures) == 0:
                 return self.failures
@@ -132,30 +171,18 @@ class SummaryEx(Summary):
                 try:
                     return [obj.pk for obj in self.failures]
                 except AttributeError:
-                    raise AssertionError(error_message)
+                    raise TypeError(error_message)
             else:
                 if not all(isinstance(el, int) for el in self.failures):
-                    raise AssertionError(error_message)
+                    raise TypeError(error_message)
                 return self.failures
         else:
-            raise AssertionError(error_message)
+            raise TypeError(error_message)
 
     def print_status(self, colour: bool = True) -> str:
         if not colour:
             return self.status.name
-
-        if self.status == Status.PASSING:
-            status_colour = "green"
-        elif self.status == Status.FAILING:
-            status_colour = "red"
-        elif self.status == Status.EXCEPTION:
-            status_colour = "grey"
-        elif self.status == Status.WARNING:
-            status_colour = "yellow"
-        else:
-            raise TypeError("that's... impossible!")
-
-        return colored(self.status.name, status_colour, attrs=["bold"])
+        return coloured(self.status.name, self.status.colour, attrs=["bold"])
 
     def _pretty_print(self):
         if self.exception_info is None:

@@ -15,8 +15,7 @@ from .results import Status
 
 
 class ExceptionInfoMixin(models.Model):
-    exc_type = models.CharField(
-        max_length=250,
+    exc_type = models.TextField(
         blank=True, null=True,
         default=None
     )

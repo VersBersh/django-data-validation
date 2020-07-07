@@ -1,9 +1,6 @@
 from pathlib import Path
 
-
 BASE_DIR = Path(__file__).absolute().parent.resolve(strict=True)
-
-SECRET_KEY = "!+z68rd0to2^9!=s_(b7^u%px(hf6m9)xg)pt8gks%olk2mth6"
 
 DEBUG = True
 
@@ -18,8 +15,12 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "datavalidation.apps.DataValidationConfig",
-    "test_app.apps.TestAppConfig",
+    "animalconference.apps.AnimalConferenceConfig",
 ]
+
+DATABASES = {
+    # define in local_settings.py
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -53,10 +54,6 @@ STATIC_URL = "/static/"
 
 WSGI_APPLICATION = "test_proj.wsgi.application"
 
-DATABASES = {
-    # define in local_settings.py
-}
-
 LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = "Australia/Melbourne"
@@ -67,6 +64,6 @@ USE_L10N = False
 
 try:
     # .gitignored overrides
-    from .local_settings import *
-except ImportError:
+    exec((BASE_DIR / "local_settings.py").read_text())
+except FileNotFoundError:
     pass

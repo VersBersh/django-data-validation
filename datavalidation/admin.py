@@ -28,8 +28,8 @@ class ValidationAdmin(admin.ModelAdmin):
             template_name = "datavalidation/index.html"
         view = partial(render, template_name=template_name)
         return [
-            url(r'^api/', include(router.urls)),
-            url(r'^api/meta/csrf', csrf_info),
-            url(r'^api/meta/object-counts', object_counts),
-            url(r'^', admin_view(view), name="datavalidation_summary_changelist"),
+            url(r"^api/", include(router.urls)),
+            url(r"^api/meta/csrf", csrf_info, name="datavalidation_csrf_info"),
+            url(r"^api/meta/object-counts", object_counts, name="datavalidation_object_counts"),
+            url(r"^", admin_view(view), name="datavalidation_summary_changelist"),
         ]

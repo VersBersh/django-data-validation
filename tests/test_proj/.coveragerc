@@ -2,3 +2,6 @@
 source = apps/datavalidation
 omit =
     apps/datavalidation/migrations/*
+    apps/datavalidation/admin/*
+    apps/datavalidation/static/*
+    apps/datavalidation/templates/*

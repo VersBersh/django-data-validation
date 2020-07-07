@@ -16,10 +16,11 @@ test_proj/_debug.py
 .idea/
 
 # other
+/_notes
 /datavalidation/static/datavalidation/dev
 /datavalidation/templates/datavalidation/dev
 /setup/test_proj.pth
 /tests/test_proj/_debug.py
 /tests/test_proj/local_settings.py
 /tests/test_proj/apps/datavalidation/
-/_notes
+/tests/test_proj/htmlcov/

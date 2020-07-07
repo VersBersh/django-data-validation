@@ -1,13 +1,14 @@
+from collections import Counter
 from typing import List, Tuple
 
 from django.apps import apps
 from django.core.management.base import BaseCommand
-from termcolor import colored
+from termcolor import colored as coloured
 
 from datavalidation.registry import REGISTRY, ValidatorInfo
-from datavalidation.results import SummaryEx
-from datavalidation.validator import ModelValidationRunner
-from datavalidation.utils import timer
+from datavalidation.results import SummaryEx, Status
+from datavalidation.runner import ModelValidationRunner
+from datavalidation.utils import sysexit, timer
 from datavalidation.logging import logger
 
 
@@ -21,24 +22,45 @@ class Command(BaseCommand):
             help="a list of models to validate."
         )
 
-    @timer(output=lambda s: logger.info(colored(s, "yellow")))
-    def handle(self, *args, **options):
+    @sysexit
+    @timer(output=lambda s: logger.info(coloured(s, "yellow")))
+    def handle(self, *args, **options) -> int:
         """ run the data validation """
         model_names = options.get("models", None)
         if model_names is None:
             models = REGISTRY.keys()
         else:
             models = [apps.get_model(name) for name in model_names]
-            for model in models:
-                if model not in REGISTRY:
-                    raise ValueError(f"{model.__name__} has no data validators")
 
         # init runners first so that they can validate the inputs
         runners = [ModelValidationRunner(model) for model in models]
 
+        totals = Counter()
         for runner in runners:
             summaries = runner.run()
             self.print_summaries(summaries)
+            for valinfo, summary in summaries:
+                totals[summary.status] += 1
+
+        result_str = (
+            f"Total Passing: {totals[Status.PASSING]}\n"
+            f"Total Failing: {totals[Status.FAILING]}\n"
+            f"Total Exceptions: {totals[Status.EXCEPTION]}\n"
+            f"Total Uninitialized: {totals[Status.UNINITIALIZED]}\n"
+        )
+        if totals[Status.FAILING] + totals[Status.EXCEPTION] > 0:
+            exit_code = 1
+            colour = "red"
+        elif totals[Status.PASSING] == 0:
+            exit_code = 0
+            colour = "white"
+        else:
+            exit_code = 0
+            colour = "green"
+
+        logger.info("="*70)
+        logger.info(coloured(result_str, colour, attrs=["bold"]))
+        return exit_code
 
     @staticmethod
     def print_summaries(summaries: List[Tuple[ValidatorInfo, SummaryEx]]):

@@ -47,6 +47,7 @@ class SummaryHandlerMixin:
                     object_pk=pk,
                     defaults={
                         "comment": "",
+                        "valid": True,
                     }
                 )
         self.summaries[valinfo] = summary
@@ -85,7 +86,6 @@ class InstanceMethodRunner(SummaryHandlerMixin):
         for obj in self.iterate_model_objects():
             valinfos = list(self.run_for_object(valinfos, obj))
 
-        # clean up any remaining invalid FailingObjects
         # clean up any remaining invalid FailingObjects
         for valinfo in self.validator_infos:
             qs = FailingObject.objects.filter(validator_id=valinfo.get_pk(), valid=False)
@@ -156,13 +156,13 @@ class InstanceMethodRunner(SummaryHandlerMixin):
 
             # save the failing object
             extra_result_args = {}
-
-            if result.allowed_to_fail is not None:
-                extra_result_args["allowed_to_fail"] = result.allowed_to_fail
-                if result.comment:
-                    extra_result_args["allowed_to_fail_justification"] = result.comment
-            elif result.comment:
-                extra_result_args["comment"] = result.comment
+            if isinstance(result, FAIL):
+                if result.allowed_to_fail is not None:
+                    extra_result_args["allowed_to_fail"] = result.allowed_to_fail
+                    if result.comment:
+                        extra_result_args["allowed_to_fail_justification"] = result.comment
+                elif result.comment:
+                    extra_result_args["comment"] = result.comment
 
             fobj, _ = FailingObject.objects.update_or_create(
                 validator_id=method_info.get_pk(),
@@ -172,7 +172,7 @@ class InstanceMethodRunner(SummaryHandlerMixin):
                     **extra_result_args,
                 }
             )
-            summary.failures.append(fobj.pk)
+            summary.failures.append(obj.pk)
 
             # if the object was (previously) marked as allowed to fail then
             # update the current summary
@@ -247,12 +247,6 @@ class ClassMethodRunner(SummaryHandlerMixin):
             exinfo = ExceptionInfoMixin.get_exception_info()
             summary = SummaryEx(exception_info=exinfo).complete()
 
-        try:
-            summary.complete()
-        except AssertionError:
-            exinfo = ExceptionInfoMixin.get_exception_info()
-            summary = SummaryEx(exception_info=exinfo).complete()
-
         self.handle_summary(valinfo, summary)
 
 
@@ -262,8 +256,7 @@ class ModelValidationRunner:
     def __init__(self,
                  model: Type[models.Model],
                  method_names: Optional[List[str]] = None):
-        if model not in REGISTRY:
-            raise ValueError(f"no data_validation methods on model {model.__name__}")
+        self.check_model(model)
         self.model = model
         self.model_info = REGISTRY[model]
         self.method_names = method_names
@@ -272,6 +265,11 @@ class ModelValidationRunner:
         else:
             self.check_method_names(method_names)
         self.validated = False
+
+    @staticmethod
+    def check_model(model: Type[models.Model]) -> None:
+        if model not in REGISTRY:
+            raise ValueError(f"no data_validation methods on model {model.__name__}")
 
     def check_method_names(self, method_names: List[str]) -> None:
         """ check that the list of method names are data validators """
@@ -290,8 +288,7 @@ class ModelValidationRunner:
             then the results are returned in the same order.
         """
         logger.info(colored(
-            f"running validation for model: {self.model_info!s}",
-            "cyan", attrs=["bold"]
+            f"\nVALIDATING MODEL: {self.model_info!s}", "cyan", attrs=["bold"]
         ))
         if self.validated:
             raise Exception("can only call validate once per instance.")
