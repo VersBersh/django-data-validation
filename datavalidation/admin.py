@@ -30,6 +30,6 @@ class ValidationAdmin(admin.ModelAdmin):
         return [
             url(r"^api/", include(router.urls)),
             url(r"^api/meta/csrf", csrf_info, name="datavalidation_csrf_info"),
-            url(r"^api/meta/object-counts", object_counts, name="datavalidation_object_counts"),
+            url(r"^api/meta/object-counts", object_counts, name="datavalidation_object_counts"),  # noqa E501
             url(r"^", admin_view(view), name="datavalidation_summary_changelist"),
         ]

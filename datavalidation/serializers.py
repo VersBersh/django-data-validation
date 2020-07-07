@@ -17,7 +17,7 @@ class FailingObjectSerializer(serializers.ModelSerializer):
         app_label = obj.validator.app_label.lower()
         model_name = obj.validator.model_name.lower()
         try:
-            return reverse(f"admin:{app_label}_{model_name}_change", args=(obj.object_pk,))
+            return reverse(f"admin:{app_label}_{model_name}_change", args=(obj.object_pk,))  # noqa E501
         except NoReverseMatch:
             return ""
 

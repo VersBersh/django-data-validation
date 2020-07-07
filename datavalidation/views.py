@@ -28,7 +28,7 @@ def object_counts(request):
 
     try:
         total = model._meta.default_manager.count()  # noqa
-    except OperationalError as e:
+    except OperationalError:
         return HttpResponseServerError()
 
     return HttpResponse(bytes(str(total), "utf-8"))

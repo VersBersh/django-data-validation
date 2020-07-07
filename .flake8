@@ -1,0 +1,10 @@
+[flake8]
+max-line-length = 90
+exclude =
+    .git,
+    .pycache
+    .pytest_cache
+	migrations,
+	datavalidation/admin,
+	test_proj/htmlcov,
+	test_proj/_debug.py

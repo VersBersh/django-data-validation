@@ -1,5 +1,3 @@
-import pytest
-
 from animalconference.models import Animal, Seminar
 from datavalidation.registry import REGISTRY, data_validator
 
@@ -35,4 +33,3 @@ def test_registry():
     assert valinfo.is_class_method is False
     assert valinfo.select_related == set()
     assert valinfo.prefetch_related == set()
-

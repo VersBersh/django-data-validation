@@ -160,7 +160,7 @@ class InstanceMethodRunner(SummaryHandlerMixin):
                 if result.allowed_to_fail is not None:
                     extra_result_args["allowed_to_fail"] = result.allowed_to_fail
                     if result.comment:
-                        extra_result_args["allowed_to_fail_justification"] = result.comment
+                        extra_result_args["allowed_to_fail_justification"] = result.comment  # noqa E501
                 elif result.comment:
                     extra_result_args["comment"] = result.comment
 
@@ -191,7 +191,7 @@ class InstanceMethodRunner(SummaryHandlerMixin):
 
         return exinfo
 
-    def iterate_model_objects(self, chunk_size: int = 2000) -> Generator[models.Model, None, None]:
+    def iterate_model_objects(self, chunk_size: int = 2000) -> Generator[models.Model, None, None]:  # noqa E501
         """ iterate the objects of a model with select/prefetch related """
         select_related_lookups = set(itertools.chain(*[
             info.select_related for info in self.validator_infos

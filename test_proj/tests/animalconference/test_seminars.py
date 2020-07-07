@@ -70,7 +70,7 @@ def test_instancemethod_hits_an_exception():
     assert summary.num_failing is None
     assert summary.num_na is None
     assert summary.num_allowed_to_fail is None
-    assert summary.exception_info["exc_type"] == "ValueError('instancemethod hit an exception',)"
+    assert summary.exception_info["exc_type"] == "ValueError('instancemethod hit an exception',)"  # noqa E501
     assert isinstance(summary.exception_info["exc_traceback"], str)
 
 
@@ -81,7 +81,7 @@ def test_classmethod_hits_an_exception():
     assert summary.num_failing is None
     assert summary.num_na is None
     assert summary.num_allowed_to_fail is None
-    assert summary.exception_info["exc_type"] == "ValueError('classmethod hit an exception',)"
+    assert summary.exception_info["exc_type"] == "ValueError('classmethod hit an exception',)"  # noqa E501
     assert "exc_traceback" in summary.exception_info
 
 

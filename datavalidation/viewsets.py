@@ -36,7 +36,3 @@ class ValidatorViewSet(viewsets.ModelViewSet):
 router = routers.DefaultRouter()
 router.register(r"failing-objects", FailingObjectViewSet)
 router.register(r"validator-summary", ValidatorViewSet)
-
-
-
-

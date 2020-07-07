@@ -4,7 +4,7 @@ import sys
 import time
 
 import inspect
-from typing import Callable, Optional, Type
+from typing import Callable, Type
 
 from django.db import models
 from django.db.models import prefetch_related_objects
@@ -37,7 +37,7 @@ def queryset_iterator(queryset: models.QuerySet, chunk_size: int):
      QuerySet.iterate silently ignores prefetch_related
      modified from this PR: https://github.com/django/django/pull/10707/files
     """
-    iterable = queryset._iterable_class(queryset, chunked_fetch=True, chunk_size=chunk_size)
+    iterable = queryset._iterable_class(queryset, chunked_fetch=True, chunk_size=chunk_size)  # noqa E501
     if not queryset._prefetch_related_lookups:
         yield from iterable
         return

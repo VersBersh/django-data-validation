@@ -208,5 +208,3 @@ class SummaryEx(Summary):
 
     def pretty_print(self):
         return "\n".join(self._pretty_print())
-
-

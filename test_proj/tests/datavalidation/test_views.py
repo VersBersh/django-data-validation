@@ -138,6 +138,3 @@ def test_rest_api_failing_objects_list_for_validator(auth_client):
     assert fobj["admin_page"] == animal_admin_page
     assert fobj["allowed_to_fail"] is False
     assert fobj["validator"] == validator_id
-
-
-
