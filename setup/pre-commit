@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+
+function color_init() {
+	# colours for pretty_print
+	typeset -rg ta_none="$(tput sgr0 2> /dev/null || true)"
+	typeset -rg ta_bold="$(tput bold || true)"
+	typeset -rg fg_cyan="$(tput setaf 6 || true)"
+	typeset -rg fg_red="$(tput setaf 1 || true)"
+}
+
+
+function pretty_print() {
+	local fmt="${2:-$fg_cyan$ta_bold}"
+	if [[ "$fmt" = "err" ]]; then
+		printf '%b%s%b\n' "$fg_red$ta_bold" "$1" "$ta_none" 1>&2
+	else
+		printf '%b%s%b\n' "$fmt" "$1" "$ta_none"
+	fi
+}
+
+
+function no_non_ascii_filenames() {
+	local against
+	if git rev-parse --verify HEAD >/dev/null 2>&1; then
+		against=HEAD
+	else
+		# Initial commit: diff against an empty tree object
+		against=$(git hash-object -t tree /dev/null)
+	fi
+
+	# Note that the use of brackets around a tr range is ok here, (it's
+	# even required, for portability to Solaris 10's /usr/bin/tr), since
+	# the square bracket bytes happen to fall in the designated range.
+	if test "$(git diff --cached --name-only --diff-filter=A -z "$against" |
+		LC_ALL=C tr -d '[ -~]\0' | wc -c)" != 0
+	then
+		pretty_print "please don't commit non-ascii filenames!" err
+		exit 1
+	fi
+}
+
+
+function check_flake8_passes() {
+	pretty_print "running flake8..."
+	if ! python -m flake8; then
+		pretty_print "please fix flake8 errors before committing" err
+		exit 1
+	fi
+}
+
+
+function check_pytests_pass() {
+	pretty_print "running pytest..."
+	# there is no argument to only output failing tests from pytest so
+	# capture all of stdout and relay it if the return code is not zero
+	if ! result="$(cd test_proj && python -m pytest)"; then
+		printf "%s\n" "$result"
+		pretty_print "please fix failing tests before committing" err
+		exit 1
+	fi
+}
+
+color_init
+no_non_ascii_filenames
+check_flake8_passes
+check_pytests_pass
