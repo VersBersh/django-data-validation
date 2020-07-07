@@ -19,7 +19,10 @@ INSTALLED_APPS = [
 ]
 
 DATABASES = {
-    # define in local_settings.py
+    "sqlite3": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": (BASE_DIR.parent / "db.sqlite3").as_posix(),
+    },
 }
 
 MIDDLEWARE = [
