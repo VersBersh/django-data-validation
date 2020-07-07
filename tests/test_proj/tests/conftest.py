@@ -1,12 +1,7 @@
-from collections import defaultdict
-from itertools import chain
-from typing import List, Type, Tuple
+from typing import Type
 
 from django.db import models
 import pytest
-from pytest import Session
-from _pytest.config import Config
-from _pytest.nodes import Item
 
 from animalconference.models import Animal, Seminar
 from datavalidation.registry import REGISTRY, ValidatorInfo
@@ -16,28 +11,6 @@ from datavalidation.runner import ModelValidationRunner
 
 import logging
 logger = logging.getLogger(__name__)
-
-
-# def pytest_collection_modifyitems(session: Session, config: Config, items: List[Item]):
-#     order = [
-#         "animalconference/test_aminals",
-#         "animalconference/test_seminars"
-#         "datavalidation/test_registry",
-#     ]
-#     modules = defaultdict(list)
-#     for item in items:
-#         module = item.parent.name.replace(".py", "")
-#         logger.warning(module)
-#         modules[module].append(item)
-#
-#     missing = set(modules.keys()) - set(order)
-#     if len(missing) != 0:
-#         logger.warning(missing)
-#         #raise ValueError(f"please specify order for modules: {', '.join(diff)}")
-#     else:
-#         items[:] = list(chain(*modules.values()))
-#         logger.warning(items)
-
 
 
 # noinspection PyUnusedLocal

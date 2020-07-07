@@ -1,6 +1,3 @@
-from unittest import mock
-
-from django.core.management import call_command
 import pytest
 
 from animalconference.models import Animal
@@ -27,27 +24,6 @@ def django_db_setup(django_db_setup):
 def valid_animals(valid_animals):
     """ autouse valid_animals fixture """
     pass
-
-
-def test_command_success():
-    """ test ./manage.py run_data_validation --models animalconference.Animal
-
-     the valid_animals fixture was loaded so this should pass
-    """
-    with mock.patch("sys.exit") as mocked_exit:
-        call_command("run_data_validation", models=["animalconference.Animal"])
-        mocked_exit.assert_called_with(0)
-
-
-def test_command_failure():
-    """ test ./manage.py run_data_validation
-
-     Seminar model contains data_validators that hit exceptions, so this
-     should fail (exit_code==1)
-    """
-    with mock.patch("sys.exit") as mocked_exit:
-        call_command("run_data_validation")
-        mocked_exit.assert_called_with(1)
 
 
 def test_check_alliteration():
