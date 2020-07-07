@@ -74,6 +74,9 @@ class Seminar(models.Model):
 
     objects = SeminarManager()
 
+    def __str__(self):
+        return self.topic
+
     @data_validator(select_related="host")
     def check_host_is_carnivorous(self) -> ResultType:
         """ only carnivorous hosts at this conference apparently """
