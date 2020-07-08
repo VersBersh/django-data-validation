@@ -59,7 +59,6 @@ def test_check_start_time_before_end_time():
     ).complete()
 
 
-
 def test_check_max_attendees():
     summary = run_validator(Seminar, "check_max_attendees")
     assert summary == SummaryEx(

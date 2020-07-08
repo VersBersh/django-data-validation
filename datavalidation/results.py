@@ -153,7 +153,7 @@ class SummaryEx(Summary):
         nones = [attr for attr in attrs if getattr(self, attr) is None]
         if len(nones) == 4:
             if self.status == Status.UNINITIALIZED:
-                self.status = Status.PASSING if len(self.failures) == 0 else Status.FAILING
+                self.status = Status.PASSING if len(self.failures) == 0 else Status.FAILING  # noqa E501
 
         elif len(nones) == 0:
             if self.num_failing <= self.num_allowed_to_fail:  # noqa
