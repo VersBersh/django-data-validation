@@ -24,12 +24,13 @@ change to the django-data-validation directory and install with pip
 
 :sh:`pip install .`
 
-In your project, add :sh:`datavalidation` to `INSTALLED_APPS`:
+In your project, add :py:`rest_framework` and :py:`datavalidation` to :py:`INSTALLED_APPS`
 
 .. code-block:: python
 
     INSTALLED_APPS = (
         ...
+        "rest_framework",
         "datavalidation.apps.DataValidationConfig",
         ...
     )
@@ -39,19 +40,20 @@ from your project directory run the database migrations
 :sh:`./manage.py migrate datavaliation`
 
 When running the django-admin server the static files for the datavalidation admin will
-be loaded automatically. If you're running on a production server you need to remember
-to run
+be served automatically (assuming :py:`"django.contrib.staticfiles"` is in
+:py:`INSTALLED_APPS`). If you're serving static files yourself you should run
 
 :sh:`./manage.py collectstatic`
 
+to copy the static files to :py:`STATIC_ROOT`
 
 Usage
 -----
 
 On any django model that has data that you would like to validate, add a method decorated
-with :py:`@data_validator` that returns :py:`PASS, FAIL` or :py:`NA`. For instance if you
-have a model with a start and end time, you can add a data_validator to check that the
-start time is always before the end time
+with :py:`@data_validator` that returns :py:`PASS`, :py:`FAIL` or :py:`NA`. For instance
+if you have a model with a start and end time, you can add a data_validator to check that
+the start time is always before the end time
 
 .. code-block:: python
 
