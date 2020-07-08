@@ -8,7 +8,7 @@
 DJANGO-DATA-VALIDATION
 ++++++++++++++++++++++
 
-A Django app to manage the validation of your data
+A Django app to manage the validation of your data. Inspired by `django-data-tests <https://github.com/andrewbird2/django-data-tests>`_
 
 write tests on your Django models and view the summary in the admin
 
@@ -50,7 +50,7 @@ from your project directory run the database migrations
 
 .. code-block:: bash
 
-    ./manage.py migrate datavaliation
+    ./manage.py migrate datavalidation
 
 When running the django-admin server the static files for the datavalidation admin will
 be served automatically (assuming :py:`"django.contrib.staticfiles"` is in
