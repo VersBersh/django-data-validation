@@ -1,0 +1,5 @@
+recursive-include datavalidation *
+prune datavalidation/admin
+prune datavalidation/node_modules
+prune datavalidation/static/datavalidation/dev
+prune datavalidation/templates/datavalidation/dev

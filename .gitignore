@@ -8,6 +8,11 @@
 */.pytest_cache/
 *.coverage
 
+# packaging
+/build
+/dist
+*.egg-info
+
 # db
 *.sqlite3
 
@@ -21,5 +26,4 @@
 /setup/test_proj.pth
 /test_proj/_debug.py
 /test_proj/local_settings.py
-/test_proj/apps/datavalidation2/
 /test_proj/htmlcov/
