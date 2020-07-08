@@ -12,11 +12,11 @@ class AnimalManager(models.Manager):
         super().__init__()
         cur_dir = Path(__file__).parent
         with (cur_dir / "lists/species.txt").open("r") as f:
-            self.species = f.read().split("\n")
+            self.species = f.read().splitlines()
 
         self.names = defaultdict(list)
         with (cur_dir / "lists/names.txt").open("r") as f:
-            for name in f.read().split():
+            for name in f.read().splitlines():
                 if len(name) == 0:
                     continue
                 self.names[name[0]].append(name)
