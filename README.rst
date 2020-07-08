@@ -18,11 +18,15 @@ Installation
 
 clone the repo
 
-:sh:`git clone https://github.com/VersBersh/django-data-validation.git`
+.. code-block:: bash
+
+    git clone https://github.com/VersBersh/django-data-validation.git
 
 change to the django-data-validation directory and install with pip
 
-:sh:`pip install .`
+.. code-block:: bash
+
+    pip install .
 
 In your project, add :py:`rest_framework` and :py:`datavalidation` to :py:`INSTALLED_APPS`
 
@@ -37,13 +41,17 @@ In your project, add :py:`rest_framework` and :py:`datavalidation` to :py:`INSTA
 
 from your project directory run the database migrations
 
-:sh:`./manage.py migrate datavaliation`
+.. code-block:: bash
+
+    ./manage.py migrate datavaliation
 
 When running the django-admin server the static files for the datavalidation admin will
 be served automatically (assuming :py:`"django.contrib.staticfiles"` is in
 :py:`INSTALLED_APPS`). If you're serving static files yourself you should run
 
-:sh:`./manage.py collectstatic`
+.. code-block:: bash
+
+    ./manage.py collectstatic
 
 to copy the static files to :py:`STATIC_ROOT`
 
@@ -80,11 +88,15 @@ the start time is always before the end time
 
 To run the validation for all models
 
-:sh:`./manage.py run_data_validation`
+.. code-block:: bash
+
+    ./manage.py run_data_validation
 
 or for a specific model
 
-:sh:`./manage.py run_data_validation --models app_label.model_name`
+.. code-block:: bash
+
+    ./manage.py run_data_validation --models <app_label>.<model_name>
 
 
 more documentation to come...
