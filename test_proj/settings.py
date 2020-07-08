@@ -54,6 +54,7 @@ TEMPLATES = [
 ]
 
 STATIC_URL = "/static/"
+STATIC_ROOT = (BASE_DIR / "static").as_posix()
 
 WSGI_APPLICATION = "test_proj.wsgi.application"
 
