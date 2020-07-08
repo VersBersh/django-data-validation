@@ -34,16 +34,24 @@ In your project, add :sh:`datavalidation` to `INSTALLED_APPS`:
         ...
     )
 
-To enable the admin run collectstatic in your project directory
+from your project directory run the database migrations
 
-:sh:`$YOUR_PROJECT_FOLDER/manage.py collectstatic`
+:sh:`./manage.py migrate datavaliation`
+
+When running the django-admin server the static files for the datavalidation admin will
+be loaded automatically. If you're running on a production server you need to remember
+to run
+
+:sh:`./manage.py collectstatic`
 
 
 Usage
 -----
 
 On any django model that has data that you would like to validate, add a method decorated
-with :py:`@data_validator` that returns :py:`PASS, FAIL` or :py:`NA`.
+with :py:`@data_validator` that returns :py:`PASS, FAIL` or :py:`NA`. For instance if you
+have a model with a start and end time, you can add a data_validator to check that the
+start time is always before the end time
 
 .. code-block:: python
 
@@ -55,6 +63,7 @@ with :py:`@data_validator` that returns :py:`PASS, FAIL` or :py:`NA`.
         ...
         start_time = models.DateTimeField()
         end_time = models.DateTimeField(blank=True, null=True)
+        ...
 
         @data_validator
         def check_start_time(self):
