@@ -39,7 +39,7 @@ export const Model: React.FC<IModelEx> = ({
     }, [appLabel, modelName]);
 
     return (
-        <Accordian defaultActiveKey="0" style={{marginBottom: "10px"}}>
+        <Accordian defaultActiveKey="" style={{marginBottom: "10px"}}>
             <Accordian.Toggle as="div" eventKey="0" className="vertical-align" style={style}>
                 <div className="no-overflow" style={{width: "20%"}} title={modelName}> {modelName} </div>
                 <StatusIndicator status={status} onDark={false} />

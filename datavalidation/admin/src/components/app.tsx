@@ -29,7 +29,7 @@ export const App: React.FC<IAppEx> = ({
     setValidators,
 }) => {
     return (
-        <Accordian defaultActiveKey="0" style={{minWidth: "1000px", marginBottom: "10px"}}>
+        <Accordian defaultActiveKey="" style={{minWidth: "1000px", marginBottom: "10px"}}>
             <Accordian.Toggle as="div" eventKey="0" className="vertical-align" style={style}>
                 <div className="no-overflow" style={{width: "20%"}} title={appLabel}> {appLabel} </div>
                 <StatusIndicator status={status} onDark={true} />

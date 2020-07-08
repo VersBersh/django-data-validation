@@ -40,19 +40,24 @@ def test_check_host_is_carnivorous():
     assert summary == SummaryEx(
         status=Status.PASSING,
         num_passing=10,
-    )
+    ).complete()
 
 
 def test_check_start_time_before_end_time():
     seminar = Seminar.objects.test_create(start_time=datetime.now(),
                                           end_time=datetime.now()-td(hours=1))
     summary = run_validator(Seminar, "check_start_time_before_end_time")
+    logger.warning(summary.failures)
+    logger.warning(summary.pretty_print())
     assert summary == SummaryEx(
         status=Status.FAILING,
-        num_passing=0,  # only num_failing can be determined from a QuerySet
-        num_failing=1,
+        num_passing=None,
+        num_failing=None,
+        num_na=None,
+        num_allowed_to_fail=None,
         failures=[seminar.id]
-    )
+    ).complete()
+
 
 
 def test_check_max_attendees():
@@ -60,7 +65,7 @@ def test_check_max_attendees():
     assert summary == SummaryEx(
         status=Status.PASSING,
         num_passing=10
-    )
+    ).complete()
 
 
 def test_instancemethod_hits_an_exception():

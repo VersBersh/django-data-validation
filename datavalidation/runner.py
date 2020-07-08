@@ -28,7 +28,7 @@ class SummaryHandlerMixin:
                        ) -> None:
         """ handle the Validation Summary """
         vpk = valinfo.get_pk()
-        extra_args = summary.exception_info or {}
+        extra_args = summary.exception_info
         if summary.status == Status.EXCEPTION:
             extra_args["last_run_time"] = datetime.now()
         Validator.objects.filter(pk=vpk).update(

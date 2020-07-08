@@ -11,10 +11,16 @@ def test_summary_ex_instantiation():
     SummaryEx.from_return_value(True)
     SummaryEx.from_return_value(False)
     SummaryEx(status=Status.PASSING).complete()
-    SummaryEx(failures=[1, 2]).complete()  # num_failing not set is okay
-    SummaryEx(failures=list(Animal.objects.all()[:3])).complete()
+    SummaryEx(num_failing=2, failures=list(Animal.objects.all()[:2])).complete()
 
-    # should throw errors (wrong types)
+    # should throw errors
+    try:
+        # needs num_failing
+        SummaryEx(failures=list(Animal.objects.all()[:3])).complete()
+        assert False, "excpected an exception"
+    except AssertionError:
+        pass
+
     try:
         SummaryEx(num_failing=1, failures=[1, 2]).complete()  # but this is not
         assert False, "expected an exception"

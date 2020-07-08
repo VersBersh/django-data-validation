@@ -37,6 +37,11 @@ export const Validator: React.FC<IValidatorEx> = ({
 }) => {
     const isException = exc_type !== null;
 
+    const all_null = (num_passing === null) && (num_failing === null) && (num_na === null);
+    if (all_null) {
+        num_allowed_to_fail = null;
+    }
+
     const totalValidated = (num_passing !== null) && (num_failing !== null) && (num_na !== null)
         ? num_passing + num_failing + num_na
         : null;
@@ -49,7 +54,7 @@ export const Validator: React.FC<IValidatorEx> = ({
         ? formatDate(parseDate(last_run_time), "%Y-%m-%d %H:%M:%S")
         : "N/A";
 
-    const cursor = isException || ((num_failing || 0) > 0) ? "pointer" : "default"
+    const cursor = exc_traceback || ((num_failing || 0) > 0) ? "pointer" : "default"
 
     const styledMethodName = () => {
         return (
@@ -114,7 +119,7 @@ export const Validator: React.FC<IValidatorEx> = ({
 
             <Accordian.Collapse eventKey="0">
                 <>
-                {isException &&
+                {exc_traceback &&
                     <SyntaxHighlighter language="python" style={docco}>
                          {exc_traceback}
                     </SyntaxHighlighter>

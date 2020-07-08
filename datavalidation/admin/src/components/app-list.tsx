@@ -58,7 +58,6 @@ function buildNestedValidatorSummary(validators: IValidator[]): IAppList {
             }
             else if (model.status === Status.EXCEPTION) {
                 app.status = Status.EXCEPTION;
-                break;
             }
         }
     }
@@ -98,17 +97,20 @@ export const AppList: React.FC = () => {
         );
     }
     return (
-        <> {
-            Object.values(appList).map(app =>
-                <App
-                    key={app.appLabel}
-                    appLabel={app.appLabel}
-                    status={app.status}
-                    models={app.models}
-                    setValidators={setValidators}
-                />
-            )
-        } </>
+        <>
+            <h2 style={{marginBottom: "10px", color: "#417690"}}> Data Validation Summary </h2>
+             {
+                Object.values(appList).map(app =>
+                    <App
+                        key={app.appLabel}
+                        appLabel={app.appLabel}
+                        status={app.status}
+                        models={app.models}
+                        setValidators={setValidators}
+                    />
+                )
+            }
+        </>
     );
 }
 

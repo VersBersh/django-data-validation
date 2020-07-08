@@ -34,7 +34,7 @@ def test_check_alliteration():
         num_passing=100,
         num_failing=1,
         failures=[failure.id]
-    )
+    ).complete()
 
 
 def test_check_carnivorous():
@@ -46,7 +46,7 @@ def test_check_carnivorous():
         num_passing=100,
         num_failing=2,
         failures=[failure1.id, failure2.id]
-    )
+    ).complete()
 
 
 def test_check_no_cannibals():
@@ -58,7 +58,7 @@ def test_check_no_cannibals():
         num_failing=1,
         num_allowed_to_fail=1,
         failures=[allowed_to_fail.id]
-    )
+    ).complete()
 
 
 def test_check_predator_heirarchy():
@@ -76,4 +76,4 @@ def test_check_predator_heirarchy():
         num_na=summary.num_na,
         num_failing=1,
         failures=[failure.id]
-    )
+    ).complete()
