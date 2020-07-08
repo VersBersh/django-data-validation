@@ -8,7 +8,14 @@
 DJANGO-DATA-VALIDATION
 ++++++++++++++++++++++
 
-A Django app to manage the validation of your data.
+A Django app to manage the validation of your data
+
+write tests on your Django models and view the summary in the admin
+
+.. image:: screenshot.png
+    :width: 100%
+    :alt: screenshot of the admin page
+
 
 Quickstart
 ==========
