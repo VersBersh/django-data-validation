@@ -16,7 +16,7 @@ class FailingObjectSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_admin_page(obj: FailingObject) -> str:
-        app_label = obj.validator.app_label.lower()
+        app_label = obj.validator.app_label
         model_name = obj.validator.model_name.lower()
         try:
             return reverse(f"admin:{app_label}_{model_name}_change", args=(obj.object_pk,))  # noqa E501
