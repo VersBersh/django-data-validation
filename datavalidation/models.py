@@ -76,7 +76,7 @@ class Validator(ExceptionInfoMixin, models.Model):
         ordering = ("app_label", "model_name", "method_name")
 
     def __str__(self):
-        return f"Validator {self.method_name}: {self.status.name}"
+        return f"{self.model_name}.{self.method_name}: {self.status.name}"
 
     @property
     def num_allowed_to_fail(self):
@@ -117,4 +117,4 @@ class FailingObject(models.Model):
         ordering = ("object_pk",)
 
     def __str__(self):
-        return f"FailingObject: {self.validator.method_name} ({self.object_pk})"
+        return f"{self.validator.model_name} ({self.object_pk}) [{self.validator.method_name}]"  # noqa E501
