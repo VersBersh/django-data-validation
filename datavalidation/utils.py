@@ -4,7 +4,7 @@ import sys
 import time
 
 import inspect
-from typing import Callable, Type
+from typing import Callable, Type, Iterable
 
 from django.db import models
 from django.db.models import prefetch_related_objects
@@ -30,6 +30,12 @@ def is_class_method(method: Callable, owner: Type) -> bool:
 #             return field.name
 
 
+def chunk(it: Iterable, size: int):
+    """ iterate an iterable in chunks """
+    it = iter(it)
+    return iter(lambda: tuple(itertools.islice(it, size)), ())
+
+
 # noinspection PyProtectedMember
 def queryset_iterator(queryset: models.QuerySet, chunk_size: int):
     """ QuerySet.iterate with prefetch_related
@@ -37,7 +43,7 @@ def queryset_iterator(queryset: models.QuerySet, chunk_size: int):
      QuerySet.iterate silently ignores prefetch_related
      modified from this PR: https://github.com/django/django/pull/10707/files
     """
-    iterable = queryset._iterable_class(queryset, chunked_fetch=True, chunk_size=chunk_size)  # noqa E501
+    iterable = queryset._iterable_class(queryset, chunked_fetch=True, chunk_size=chunk_size)
     if not queryset._prefetch_related_lookups:
         yield from iterable
         return

@@ -52,7 +52,6 @@ def test_check_start_time_before_end_time():
     assert summary == SummaryEx(
         status=Status.FAILING,
         num_passing=None,
-        num_failing=None,
         num_na=None,
         num_allowed_to_fail=None,
         failures=[seminar.id]
@@ -71,9 +70,9 @@ def test_instancemethod_hits_an_exception():
     summary = run_validator(Seminar, "check_instancemethod_hits_an_exception")
     assert summary.status == Status.EXCEPTION
     assert summary.num_passing is None
-    assert summary.num_failing is None
     assert summary.num_na is None
     assert summary.num_allowed_to_fail is None
+    assert summary.failures is None
     assert summary.exception_info["exc_type"] == "ValueError('instancemethod hit an exception',)"  # noqa E501
     assert isinstance(summary.exception_info["exc_traceback"], str)
 
@@ -82,9 +81,9 @@ def test_classmethod_hits_an_exception():
     summary = run_validator(Seminar, "check_classmethod_hits_an_exception")
     assert summary.status == Status.EXCEPTION
     assert summary.num_passing is None
-    assert summary.num_failing is None
     assert summary.num_na is None
     assert summary.num_allowed_to_fail is None
+    assert summary.failures is None
     assert summary.exception_info["exc_type"] == "ValueError('classmethod hit an exception',)"  # noqa E501
     assert "exc_traceback" in summary.exception_info
 
@@ -93,9 +92,9 @@ def test_check_return_none():
     summary = run_validator(Seminar, "check_return_none")
     assert summary.status == Status.EXCEPTION
     assert summary.num_passing is None
-    assert summary.num_failing is None
     assert summary.num_na is None
     assert summary.num_allowed_to_fail is None
+    assert summary.failures is None
     assert summary.exception_info["exc_type"].startswith("TypeError")
     assert "exc_obj_pk" in summary.exception_info
 
@@ -104,9 +103,9 @@ def test_check_return_silent():
     summary = run_validator(Seminar, "check_return_silent")
     assert summary.status == Status.EXCEPTION
     assert summary.num_passing is None
-    assert summary.num_failing is None
     assert summary.num_na is None
     assert summary.num_allowed_to_fail is None
+    assert summary.failures is None
     assert summary.exception_info["exc_type"].startswith("TypeError")
 
 
@@ -115,7 +114,7 @@ def test_check_return_inconsistent_summary():
     logger.info(summary)
     assert summary.status == Status.EXCEPTION
     assert summary.num_passing is None
-    assert summary.num_failing is None
     assert summary.num_na is None
     assert summary.num_allowed_to_fail is None
+    assert summary.failures is None
     assert summary.exception_info["exc_type"].startswith("TypeError")

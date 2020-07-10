@@ -5,6 +5,7 @@ from typing import Optional, Dict
 import enumfields
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.urls import reverse, NoReverseMatch
 
 from .constants import (
     MAX_DESCRIPTION_LEN,
@@ -61,7 +62,6 @@ class Validator(ExceptionInfoMixin, models.Model):
     last_run_time = models.DateTimeField(blank=True, null=True)
     status = enumfields.EnumIntegerField(Status, default=Status.UNINITIALIZED)
     num_passing = models.PositiveIntegerField(blank=True, null=True)
-    num_failing = models.PositiveIntegerField(blank=True, null=True)
     num_na = models.PositiveIntegerField(blank=True, null=True)
 
     content_type = models.ForeignKey(
@@ -78,8 +78,10 @@ class Validator(ExceptionInfoMixin, models.Model):
     def __str__(self):
         return f"{self.model_name}.{self.method_name}: {self.status.name}"
 
-    @property
-    def num_allowed_to_fail(self):
+    def get_num_failing(self):
+        return self.failing_objects.count()
+
+    def get_num_allowed_to_fail(self):
         return self.failing_objects.filter(allowed_to_fail=True).count()
 
     @property
@@ -118,3 +120,12 @@ class FailingObject(models.Model):
 
     def __str__(self):
         return f"{self.validator.model_name} ({self.object_pk}) [{self.validator.method_name}]"  # noqa E501
+
+    @property
+    def admin_page(self) -> str:
+        app_label = self.validator.app_label
+        model_name = self.validator.model_name.lower()
+        try:
+            return reverse(f"admin:{app_label}_{model_name}_change", args=(self.object_pk,))
+        except NoReverseMatch:
+            return ""

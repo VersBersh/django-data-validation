@@ -12,7 +12,7 @@ from .models import (
 )
 from .registry import REGISTRY, ValidatorInfo
 from .results import PASS, FAIL, NA, Result, SummaryEx, Status
-from .utils import queryset_iterator
+from .utils import queryset_iterator, chunk
 
 from .logging import logger
 
@@ -23,33 +23,37 @@ class SummaryHandlerMixin:
 
     def handle_summary(self,
                        valinfo: ValidatorInfo,
-                       summary: Optional[SummaryEx],
+                       summary: SummaryEx,
                        skip_failures: bool = False
                        ) -> None:
         """ handle the Validation Summary """
         vpk = valinfo.get_pk()
-        extra_args = summary.exception_info
+        summary = summary.complete()
+        extra_args = summary.exception_info.copy()
         if summary.status == Status.PASSING:
             extra_args["last_run_time"] = datetime.now()
+
         Validator.objects.filter(pk=vpk).update(
             status=summary.status,
             num_passing=summary.num_passing,
-            num_failing=summary.num_failing,
             num_na=summary.num_na,
             **extra_args,
         )
 
         # if failures were supplied then update the ValidationResult table
         if summary.failures is not None and not skip_failures:
-            for pk in summary.failures:
-                FailingObject.objects.update_or_create(
-                    validator_id=vpk,
-                    object_pk=pk,
-                    defaults={
-                        "comment": "",
-                        "valid": True,
-                    }
-                )
+            for object_pks in chunk(summary.failures, 1000):
+                qs_update = (FailingObject.objects
+                                          .filter(object_pk__in=object_pks)
+                                          .select_for_update())
+                qs_update.update(valid=True, comment="")
+                pks_updated = qs_update.values_list("object_pk", flat=True)
+                objects_to_create = [
+                    FailingObject(validator_id=vpk, object_pk=pk, comment="", valid=True)
+                    for pk in set(object_pks) - set(pks_updated)
+                ]
+                FailingObject.objects.bulk_create(objects_to_create)
+
         self.summaries[valinfo] = summary
         return
 
@@ -70,23 +74,20 @@ class InstanceMethodRunner(SummaryHandlerMixin):
          :returns: a dictionary mapping ValidatorInfos to the SummaryEx
             containing the validation results
         """
-        # delete failing objects from previous run, but retain objects
-        # marked allowed_to_fail and set them as invalid so that field is
-        # not lost
+        # mark failing objects from the previous run as invalid (but don't
+        # delete them yet so we don't lose any with allowed_to_fail=True
         for valinfo in self.validator_infos:
             qs = FailingObject.objects.filter(validator_id=valinfo.get_pk())
-            # noinspection PyProtectedMember
-            qs.exclude(allowed_to_fail=True)._raw_delete(qs.db)
             qs.update(valid=False)
 
         # iterate over each object in the table and call each data
-        # validator on it. When an exception is encountered on a validator,
+        # validator on it. When an exception is encountered on a validator
         # remove it from the list
         valinfos = self.validator_infos.copy()
         for obj in self.iterate_model_objects():
             valinfos = list(self.run_for_object(valinfos, obj))
 
-        # clean up any remaining invalid FailingObjects
+        # now we can delete the invalid objects
         for valinfo in self.validator_infos:
             qs = FailingObject.objects.filter(validator_id=valinfo.get_pk(), valid=False)
             # noinspection PyProtectedMember
@@ -94,7 +95,6 @@ class InstanceMethodRunner(SummaryHandlerMixin):
 
         for valinfo, summary in self._summaries.items():
             # skip_failures because we already created the FailingObjects
-            summary.complete()
             self.handle_summary(valinfo, summary, skip_failures=True)
 
         return self.summaries
@@ -115,7 +115,7 @@ class InstanceMethodRunner(SummaryHandlerMixin):
                 # stop calling this validator if an exception was hit
                 self._summaries.pop(valinfo)
                 exinfo["exc_obj_pk"] = obj.pk
-                summary = SummaryEx(exception_info=exinfo).complete()
+                summary = SummaryEx(exception_info=exinfo)
                 self.handle_summary(valinfo, summary, skip_failures=True)
 
     def run_validator_for_object(self,
@@ -152,15 +152,13 @@ class InstanceMethodRunner(SummaryHandlerMixin):
             summary.num_passing += 1
 
         elif result is FAIL or isinstance(result, FAIL) or result is False:
-            summary.num_failing += 1
-
             # save the failing object
             extra_result_args = {}
             if isinstance(result, FAIL):
                 if result.allowed_to_fail is not None:
                     extra_result_args["allowed_to_fail"] = result.allowed_to_fail
                     if result.comment:
-                        extra_result_args["allowed_to_fail_justification"] = result.comment  # noqa E501
+                        extra_result_args["allowed_to_fail_justification"] = result.comment
                 elif result.comment:
                     extra_result_args["comment"] = result.comment
 
@@ -222,8 +220,6 @@ class ClassMethodRunner(SummaryHandlerMixin):
         """
         for valinfo in self.validator_infos:
             qs = FailingObject.objects.filter(validator_id=valinfo.get_pk())
-            # noinspection PyProtectedMember
-            qs.exclude(allowed_to_fail=True)._raw_delete(qs.db)
             qs.update(valid=False)
 
         for valinfo in self.validator_infos:
@@ -245,7 +241,7 @@ class ClassMethodRunner(SummaryHandlerMixin):
             summary = SummaryEx.from_return_value(returnval)
         except Exception:
             exinfo = ExceptionInfoMixin.get_exception_info()
-            summary = SummaryEx(exception_info=exinfo).complete()
+            summary = SummaryEx(exception_info=exinfo)
 
         self.handle_summary(valinfo, summary)
 

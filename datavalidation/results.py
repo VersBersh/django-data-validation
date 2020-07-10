@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 import enum
 from typing import List, Optional, Union, Any, NewType, Type, Generator
 
+from django.db import models
 from django.db.models import Model, QuerySet
 from termcolor import colored as coloured
 
@@ -50,9 +51,8 @@ ResultType = NewType("ResultType", Union[bool, Result, Type[Result]])
 
 @dataclass
 class Summary:
-    num_passing: Optional[int] = 0
-    num_failing: Optional[int] = 0
     num_na: Optional[int] = 0
+    num_passing: Optional[int] = 0
     failures: Union[QuerySet, List[Model], List[int]] = field(default_factory=list)
 
 
@@ -60,16 +60,27 @@ class Summary:
 @dataclass
 class SummaryEx(Summary):
     """ Summary Extended (keep some methods away from the user) """
-    status: Optional[Status] = Status.UNINITIALIZED
+    status: Status = Status.UNINITIALIZED
     num_allowed_to_fail: Optional[int] = 0
     exception_info: Optional[dict] = None
+    failures: Union[QuerySet, List[Model], List[int], None] = field(default_factory=list)
+
+    TYPE_ERROR_MESSAGES = {
+        "num_passing": "Summary.num_passing must be an int",
+        "num_na": "Summary.num_na must be an int",
+        "failures": "Summary.failures must be a QuerySet, a list of django "
+                    "model objects, or a list of object ids",
+    }
 
     def __eq__(self, other: "SummaryEx") -> bool:
         # only used during testing
         for prop, val in self.__dict__.items():
             if prop == "failures":
-                if sorted(list(val)) != sorted(list(other.failures)):
+                if type(val) is not type(other.failures):  # noqa E721
                     return False
+                if val is not None:
+                    if sorted(list(val)) != sorted(list(other.failures)):
+                        return False
             elif prop == "exception_info":
                 if type(val) is not type(other.exception_info):  # noqa E721
                     return False
@@ -83,14 +94,24 @@ class SummaryEx(Summary):
 
     @classmethod
     def from_summary(cls, summary: Summary) -> "SummaryEx":
-        for attr in ("num_passing", "num_failing", "num_na"):
-            if not type(getattr(summary, attr)) is int:
-                raise TypeError(f"Summary.{attr} must be an int")
+        # n.b. don't use isinstance because bool is a subclass of int
+        # i.e. isinstance(True, int) == True
+        if not type(summary.num_na) is int:
+            raise TypeError(cls.TYPE_ERROR_MESSAGES["num_na"])
+        if not type(summary.num_passing) is int:
+            raise TypeError(cls.TYPE_ERROR_MESSAGES["num_passing"])
         if not isinstance(summary.failures, (QuerySet, list)):
-            raise TypeError("Summary.failures must be a QuerySet, or list")
+            raise TypeError(cls.TYPE_ERROR_MESSAGES["failures"])
+        elif isinstance(summary.failures, list) and len(summary.failures) != 0:
+            first = summary.failures[0]
+            if not (isinstance(first, models.Model) or type(first) is int):
+                raise TypeError(cls.TYPE_ERROR_MESSAGES["failures"])
+            first_type = type(first)
+            if not all(isinstance(el, first_type) for el in summary.failures):
+                raise TypeError("all elements of summary.failures must be the same type")
         summary_ex = cls()
         summary_ex.__dict__.update(summary.__dict__)
-        return summary_ex.complete()
+        return summary_ex
 
     @classmethod
     def from_return_value(cls, returnval: Any) -> "SummaryEx":
@@ -108,55 +129,49 @@ class SummaryEx(Summary):
             return cls.from_summary(returnval)
         elif returnval is True or returnval is PASS or isinstance(returnval, PASS):
             return SummaryEx(status=Status.PASSING, num_passing=None,
-                             num_failing=None, num_na=None,
-                             num_allowed_to_fail=None).complete()
+                             num_na=None, num_allowed_to_fail=None)
         elif returnval is False or returnval is FAIL or isinstance(returnval, FAIL):
             return SummaryEx(status=Status.FAILING, num_passing=None,
-                             num_failing=None, num_na=None,
-                             num_allowed_to_fail=None).complete()
+                             num_na=None, num_allowed_to_fail=None)
         elif isinstance(returnval, (QuerySet, list)):
             return SummaryEx(failures=returnval, num_passing=None,
-                             num_failing=None, num_na=None,
-                             num_allowed_to_fail=None).complete()
+                             num_na=None, num_allowed_to_fail=None)
         else:
             raise TypeError(
                 f"{type(returnval)} is not a permissible return value for "
                 f"a classmethod validator. Permissible types are: "
                 f"datavalidator.Summary, True, False, datavalidator.PASS, "
                 f"datavalidator.FAIL, django.db.models.QuerySet, a list "
-                f"(of objects or object ids)"
+                f"of objects or object ids"
             )
 
     def complete(self) -> "SummaryEx":
         """ ensure that Summary is consistent and update self.passed """
+        attrs = ("num_passing", "num_na", "num_allowed_to_fail")
         exinfo = {
             "exc_type": None,
             "exc_traceback": None,
             "exc_obj_pk": None,
         }
-        attrs = ("num_passing", "num_failing", "num_na", "num_allowed_to_fail")
         if self.is_exception:
             exinfo.update(self.exception_info)
             self.exception_info = exinfo
             self.status = Status.EXCEPTION
             for attr in attrs:
                 setattr(self, attr, None)
-            self.failures = []
+            self.failures = None
             return self
         else:
             self.exception_info = exinfo
-
-        self.failures = self.get_failure_pks()
-        if self.num_failing is not None and len(self.failures) != self.num_failing:
-            raise AssertionError("Summary.num_failing != len(Summary.failures)")
+            self.failures = self.get_failure_pks()
 
         nones = [attr for attr in attrs if getattr(self, attr) is None]
-        if len(nones) == 4:
+        if len(nones) == len(attrs):
             if self.status == Status.UNINITIALIZED:
-                self.status = Status.PASSING if len(self.failures) == 0 else Status.FAILING  # noqa E501
+                self.status = Status.PASSING if len(self.failures) == 0 else Status.FAILING
 
         elif len(nones) == 0:
-            if self.num_failing <= self.num_allowed_to_fail:  # noqa
+            if len(self.failures) <= self.num_allowed_to_fail:  # noqa
                 status = Status.PASSING
             else:
                 status = Status.FAILING
@@ -164,19 +179,15 @@ class SummaryEx(Summary):
             if self.status == Status.UNINITIALIZED:
                 self.status = status
             elif self.status != status:
-                raise ValueError("inconsistent SummaryEx")
+                raise ValueError("Inconsistent SummaryEx")
 
         else:
-            raise TypeError(f"Summary.{nones[0]} is None")
+            raise TypeError(f"Summary.{nones[0]} should not be None")
 
         return self
 
-    def get_failure_pks(self) -> List[int]:
+    def get_failure_pks(self) -> Optional[List[int]]:
         """ convert self.faliures to a list of primary keys """
-        error_message = (
-            "Summary.failures expects a QuerySet, a list of objects, or a "
-            "list of primary keys"
-        )
         if isinstance(self.failures, QuerySet):
             return list(self.failures.values_list("pk", flat=True))
         elif isinstance(self.failures, list):
@@ -186,19 +197,20 @@ class SummaryEx(Summary):
                 try:
                     return [obj.pk for obj in self.failures]
                 except AttributeError:
-                    raise TypeError(error_message)
+                    raise TypeError(self.TYPE_ERROR_MESSAGES["failures"])
             else:
                 if not all(isinstance(el, int) for el in self.failures):
-                    raise TypeError(error_message)
+                    raise TypeError(self.TYPE_ERROR_MESSAGES["failures"])
                 return self.failures
         else:
-            raise TypeError(error_message)
+            raise TypeError(self.TYPE_ERROR_MESSAGES["failures"])
 
     @property
     def is_exception(self) -> bool:
         if self.exception_info is None:
             return False
-        return self.exception_info["exc_type"] is not None
+        return (("exc_type" in self.exception_info) and
+                (self.exception_info["exc_type"] is not None))
 
     def print_status(self, colour: bool = True) -> str:
         if not colour:
@@ -209,13 +221,13 @@ class SummaryEx(Summary):
         if not self.is_exception:
             if self.num_passing is not None:
                 yield f"PASSED: {self.num_passing}"
-            if self.num_failing is not None:
-                yield f"FAILED: {self.num_failing}"
+            if self.failures is not None:
+                yield f"FAILED: {len(self.failures)}"
             if self.num_na is not None:
                 yield f"NA: {self.num_na}"
             if self.num_allowed_to_fail is not None:
                 yield f"Allowed to Fail: {self.num_allowed_to_fail}"
-            if len(self.failures) != 0:
+            if self.failures is not None and len(self.failures) > 0:
                 ids = ", ".join(map(str, self.failures[:3]))
                 if len(self.failures) > 3:
                     ids += "..."

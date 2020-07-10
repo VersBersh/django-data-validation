@@ -32,7 +32,8 @@ def test_check_alliteration():
     assert summary == SummaryEx(
         status=Status.FAILING,
         num_passing=100,
-        num_failing=1,
+        num_na=0,
+        num_allowed_to_fail=0,
         failures=[failure.id]
     ).complete()
 
@@ -44,7 +45,8 @@ def test_check_carnivorous():
     assert summary == SummaryEx(
         status=Status.FAILING,
         num_passing=100,
-        num_failing=2,
+        num_na=0,
+        num_allowed_to_fail=0,
         failures=[failure1.id, failure2.id]
     ).complete()
 
@@ -55,7 +57,7 @@ def test_check_no_cannibals():
     assert summary == SummaryEx(
         status=Status.PASSING,
         num_passing=100,
-        num_failing=1,
+        num_na=0,
         num_allowed_to_fail=1,
         failures=[allowed_to_fail.id]
     ).complete()
@@ -74,6 +76,6 @@ def test_check_predator_heirarchy():
         status=Status.FAILING,
         num_passing=summary.num_passing,
         num_na=summary.num_na,
-        num_failing=1,
+        num_allowed_to_fail=0,
         failures=[failure.id]
     ).complete()
