@@ -21,16 +21,15 @@ from .logging import logger
 
 
 class ResultHandlerMixin:
-
     @staticmethod
     def handle_return_value(valinfo: ValidatorInfo,
                             obj: models.Model,
                             retval: ResultType,
                             exinfo: Optional[dict]
                             ) -> Tuple[Type[Result], Optional[dict], Optional[bool]]:
-        """ handle the result returned by an instance-method validator
+        """ handle the value returned by an instance-method validator
 
-         :returns: a tuple (status, exception_info, allowed_to_fail)
+         :returns: a tuple (result, exception_info, allowed_to_fail)
             result: return value of the method cast to Type[Result],
             exception_info: if there was an exception
             allowed_to_fail: set if result is FAIL and the object is marked
