@@ -374,11 +374,11 @@ class ObjectValidationRunner(ResultHandlerMixin):
             valinfo, self.obj, retval, exinfo
         )
 
-        if result is PASS:
+        if result is PASS or result is NA:
             return True
         elif result is FAIL:
             return allowed_to_fail
-        elif result == EXCEPTION:
+        elif result is EXCEPTION:
             return False
         else:
             raise RuntimeError("that's.. impossible!")
