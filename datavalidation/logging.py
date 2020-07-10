@@ -1,8 +1,28 @@
 import sys
 import logging
-logger = logging.getLogger("datavalidation")
+
+from termcolor import colored
+
+
+class ColouredLogger(logging.Logger):
+    def cdebug(self, message: str) -> None:
+        self.debug(colored(message, color="magenta"))
+
+    def cinfo(self, message: str) -> None:
+        self.info(colored(message, color="cyan", attrs=["bold"]))
+
+    def cwarning(self, message: str) -> None:
+        self.info(colored(message, color="yellow"))
+
+    def cerror(self, message: str) -> None:
+        self.error(colored(message, color="red", attrs=["bold"]))
+
+
+logger = logging.getLogger("datavalidaiton")
 logger.setLevel(logging.INFO)
+
 handler = logging.StreamHandler(sys.stdout)
-formatter = logging.Formatter("%(message)s")
-handler.formatter = formatter
+handler.formatter = logging.Formatter("%(message)s")
 logger.addHandler(handler)
+
+logger.__class__ = ColouredLogger
