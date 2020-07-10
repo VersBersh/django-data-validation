@@ -23,6 +23,7 @@
 /_notes
 /datavalidation/static/datavalidation/dev
 /datavalidation/templates/datavalidation/dev
+/deps/pip.all
 /setup/test_proj.pth
 /test_proj/_debug.py
 /test_proj/local_settings.py
