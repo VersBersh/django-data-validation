@@ -8,6 +8,7 @@ from typing import (
 
 from dataclasses import dataclass, field
 from django.db import models
+from django.utils.functional import cached_property  # n.b. in functools from py3.7+
 
 from .constants import MAX_DESCRIPTION_LEN
 from .utils import is_class_method
@@ -44,7 +45,7 @@ class ValidatorInfo:
         """ return the primary key of the corresponding ValidationMethod """
         from .models import Validator
         obj, _ = Validator.objects.update_or_create(
-            content_type_id=self.model_info.content_type_id(),
+            content_type_id=self.model_info.content_type_id,
             method_name=self.method_name,
             defaults={
                 "app_label": self.model_info.app_label,
@@ -70,7 +71,7 @@ class ModelInfo:
     def __hash__(self):
         return hash(str(self))
 
-    @lru_cache()
+    @cached_property
     def content_type_id(self) -> int:
         from django.contrib.contenttypes.models import ContentType
         return ContentType.objects.get_for_model(self.model).id

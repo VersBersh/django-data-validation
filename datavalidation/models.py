@@ -119,7 +119,7 @@ class FailingObject(models.Model):
         ordering = ("object_pk",)
 
     def __str__(self):
-        return f"{self.validator.model_name} ({self.object_pk}) [{self.validator.method_name}]"  # noqa E501
+        return f"{self.validator.model_name} ({self.object_pk}) [{self.validator.method_name}]"
 
     @property
     def admin_page(self) -> str:

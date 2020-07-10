@@ -129,4 +129,4 @@ class Seminar(models.Model):
     @data_validator
     def check_return_inconsistent_summary(cls) -> Summary:
         """ when the user returns an inconsistent Summary object """
-        return Summary(num_failing=True)
+        return Summary(failures=True)  # noqa

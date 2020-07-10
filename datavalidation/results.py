@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 import enum
-from typing import List, Optional, Union, Any, NewType, Type, Generator
+from typing import List, Optional, Union, Any, NewType, Type, Generator, Tuple
 
 from django.db import models
 from django.db.models import Model, QuerySet
@@ -30,6 +30,11 @@ class Status(enum.Enum):
 
 @dataclass
 class Result:
+    """ a result returned from an instance-method data-validator
+
+     n.b. it is also permitted to return a bool from an instance-method
+     data-validator
+    """
     comment: Optional[str] = None
     allowed_to_fail: Optional[bool] = None
 
@@ -46,14 +51,47 @@ class NA(Result):
     pass
 
 
+class EXCEPTION(Result):
+    pass
+
+
 ResultType = NewType("ResultType", Union[bool, Result, Type[Result]])
+
+
+def check_return_value(return_value: ResultType,
+                       exception_info: Optional[dict] = None,
+                       object_pk: Optional[int] = None,
+                       ) -> Tuple[Type[Result], Optional[dict]]:
+    """ check that the user has returned a valid ResultType
+
+     :returns: the Status and exception info if there is any
+    """
+    if exception_info is not None:
+        return EXCEPTION, exception_info
+    elif return_value is PASS or isinstance(return_value, PASS) or return_value is True:
+        return PASS, None
+    elif return_value is FAIL or isinstance(return_value, FAIL) or return_value is False:
+        return FAIL, None
+    elif return_value is NA or isinstance(return_value, NA) or return_value is True:
+        return NA, None
+    else:
+        return EXCEPTION, {
+            "exc_type": "TypeError('data validators must return datavalidator.PASS, "
+                        "datavalidator.FAIL, datavalidator.NA, True, or False')",
+            "exc_obj_pk": object_pk,
+        }
 
 
 @dataclass
 class Summary:
-    num_na: Optional[int] = 0
+    """ The return value of a classmethod data_validator
+
+     n.b. it is also permitted to return a bool, or a QuerySet (of the
+     objects that fail the validation) from classmethod validators
+    """
     num_passing: Optional[int] = 0
     failures: Union[QuerySet, List[Model], List[int]] = field(default_factory=list)
+    num_na: Optional[int] = 0
 
 
 # internal use only
@@ -61,9 +99,9 @@ class Summary:
 class SummaryEx(Summary):
     """ Summary Extended (keep some methods away from the user) """
     status: Status = Status.UNINITIALIZED
+    failures: Union[QuerySet, List[Model], List[int], None] = field(default_factory=list)
     num_allowed_to_fail: Optional[int] = 0
     exception_info: Optional[dict] = None
-    failures: Union[QuerySet, List[Model], List[int], None] = field(default_factory=list)
 
     TYPE_ERROR_MESSAGES = {
         "num_passing": "Summary.num_passing must be an int",
@@ -145,24 +183,38 @@ class SummaryEx(Summary):
                 f"of objects or object ids"
             )
 
-    def complete(self) -> "SummaryEx":
-        """ ensure that Summary is consistent and update self.passed """
-        attrs = ("num_passing", "num_na", "num_allowed_to_fail")
-        exinfo = {
+    @property
+    def is_exception(self) -> bool:
+        if self.exception_info is None:
+            return False
+        return (("exc_type" in self.exception_info) and
+                (self.exception_info["exc_type"] is not None))
+
+    @staticmethod
+    def complete_exception_info(exception_info: Optional[dict]):
+        """ ensure exception info dict has the required fields """
+        base_exception_info = {
             "exc_type": None,
             "exc_traceback": None,
             "exc_obj_pk": None,
         }
+        if exception_info is None:
+            return base_exception_info
+        else:
+            base_exception_info.update(exception_info)
+            return base_exception_info
+
+    def complete(self) -> "SummaryEx":
+        """ ensure that Summary is consistent and update self.status """
+        attrs = ("num_passing", "num_na", "num_allowed_to_fail")
+        self.exception_info = self.complete_exception_info(self.exception_info)
         if self.is_exception:
-            exinfo.update(self.exception_info)
-            self.exception_info = exinfo
             self.status = Status.EXCEPTION
             for attr in attrs:
                 setattr(self, attr, None)
             self.failures = None
             return self
         else:
-            self.exception_info = exinfo
             self.failures = self.get_failure_pks()
 
         nones = [attr for attr in attrs if getattr(self, attr) is None]
@@ -204,13 +256,6 @@ class SummaryEx(Summary):
                 return self.failures
         else:
             raise TypeError(self.TYPE_ERROR_MESSAGES["failures"])
-
-    @property
-    def is_exception(self) -> bool:
-        if self.exception_info is None:
-            return False
-        return (("exc_type" in self.exception_info) and
-                (self.exception_info["exc_type"] is not None))
 
     def print_status(self, colour: bool = True) -> str:
         if not colour:

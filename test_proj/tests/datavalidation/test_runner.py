@@ -14,7 +14,7 @@ def test_runner_with_bad_model():
         ModelValidationRunner(Validator).run()
         assert False, "expected an exception"
     except ValueError as e:
-        assert e.args == ("no data_validation methods on model Validator",)
+        assert e.args == ("no data validation methods on model Validator",)
 
 
 def test_runner_with_bad_method():
@@ -23,7 +23,7 @@ def test_runner_with_bad_method():
         ModelValidationRunner(Animal, method_names=["foobar"]).run()
         assert False, "expected as exception"
     except ValueError as e:
-        assert e.args == ("foobar is not a data_validator on Animal",)
+        assert e.args == ("foobar is not a data validator on Animal",)
 
 
 @pytest.mark.django_db
