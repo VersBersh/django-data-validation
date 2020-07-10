@@ -4,10 +4,6 @@ from animalconference.models import Animal
 from datavalidation.results import Status, SummaryEx
 from ..conftest import run_validator
 
-import logging
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
 
 pytestmark = pytest.mark.django_db
 

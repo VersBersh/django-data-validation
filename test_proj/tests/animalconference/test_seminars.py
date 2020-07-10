@@ -6,10 +6,6 @@ from animalconference.models import Seminar
 from datavalidation.results import Status, SummaryEx
 from ..conftest import run_validator
 
-import logging
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
 
 pytestmark = pytest.mark.django_db
 
@@ -47,8 +43,6 @@ def test_check_start_time_before_end_time():
     seminar = Seminar.objects.test_create(start_time=datetime.now(),
                                           end_time=datetime.now()-td(hours=1))
     summary = run_validator(Seminar, "check_start_time_before_end_time")
-    logger.warning(summary.failures)
-    logger.warning(summary.pretty_print())
     assert summary == SummaryEx(
         status=Status.FAILING,
         num_passing=None,
@@ -111,7 +105,6 @@ def test_check_return_silent():
 
 def test_check_return_inconsistent_summary():
     summary = run_validator(Seminar, "check_return_inconsistent_summary")
-    logger.info(summary)
     assert summary.status == Status.EXCEPTION
     assert summary.num_passing is None
     assert summary.num_na is None

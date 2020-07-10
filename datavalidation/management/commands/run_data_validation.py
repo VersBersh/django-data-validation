@@ -23,7 +23,7 @@ class Command(BaseCommand):
         )
 
     @sysexit
-    @timer(output=lambda s: logger.info(coloured(s, "yellow")))
+    @timer(output=logger.cinfo)
     def handle(self, *args, **options) -> int:
         """ run the data validation """
         model_names = options.get("models", None)

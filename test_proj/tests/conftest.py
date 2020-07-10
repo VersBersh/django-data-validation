@@ -4,13 +4,10 @@ from django.db import models
 import pytest
 
 from animalconference.models import Animal, Seminar
+from datavalidation.logging import logger
 from datavalidation.registry import REGISTRY, ValidatorInfo
 from datavalidation.results import SummaryEx
 from datavalidation.runner import ModelValidationRunner
-
-
-import logging
-logger = logging.getLogger(__name__)
 
 
 # noinspection PyUnusedLocal
@@ -32,7 +29,7 @@ def valid_animals(django_db_blocker):
         if count == 0:
             Animal.objects.populate_database(100)
         elif count != 100:
-            logger.info(count)
+            logger.cwarning("Animal count:", count)
             raise AssertionError("something went wrong with --reuse-db")
 
 
@@ -44,7 +41,7 @@ def valid_seminars(django_db_blocker):
         if count == 0:
             Seminar.objects.populate_database(10)
         elif count != 10:
-            logger.info(count)
+            logger.cwarning(count)
             raise AssertionError("something went wrong with --reuse-db")
 
 
