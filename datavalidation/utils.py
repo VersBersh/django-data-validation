@@ -4,10 +4,13 @@ import sys
 import time
 
 import inspect
-from typing import Callable, Type, Iterable
+from typing import Callable, Type, Iterable, TypeVar, Tuple, List
 
 from django.db import models
 from django.db.models import prefetch_related_objects
+
+
+T = TypeVar("T")
 
 
 def is_class_method(method: Callable, owner: Type) -> bool:
@@ -30,10 +33,18 @@ def is_class_method(method: Callable, owner: Type) -> bool:
 #             return field.name
 
 
-def chunk(it: Iterable, size: int):
+def chunk(iterable: Iterable[T], size: int) -> Iterable[T]:
     """ iterate an iterable in chunks """
-    it = iter(it)
+    it = iter(iterable)
     return iter(lambda: tuple(itertools.islice(it, size)), ())
+
+
+def partition(iterable: Iterable[T], predicate: Callable) -> Tuple[List[T], List[T]]:
+    """ partition a list into two depending on a predicate """
+    trues, falses = [], []
+    for element in iterable:
+        trues.append(element) if predicate(element) else falses.append(element)
+    return trues, falses
 
 
 # noinspection PyProtectedMember

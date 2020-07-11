@@ -3,6 +3,7 @@ import traceback
 from typing import Optional, Dict
 
 import enumfields
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.urls import reverse, NoReverseMatch
@@ -11,7 +12,6 @@ from .constants import (
     MAX_DESCRIPTION_LEN,
     MAX_TRACEBACK_LEN,
 )
-from .registry import REGISTRY, ModelInfo
 from .results import Status
 
 
@@ -64,15 +64,9 @@ class Validator(ExceptionInfoMixin, models.Model):
     num_passing = models.PositiveIntegerField(blank=True, null=True)
     num_na = models.PositiveIntegerField(blank=True, null=True)
 
-    content_type = models.ForeignKey(
-        ContentType,
-        on_delete=models.CASCADE,
-        related_name='+',
-    )
-
     class Meta:
-        index_together = ("content_type", "method_name")
-        unique_together = ("content_type", "method_name")
+        index_together = ("app_label", "model_name", "method_name")
+        unique_together = ("app_label", "model_name", "method_name")
         ordering = ("app_label", "model_name", "method_name")
 
     def __str__(self):
@@ -84,12 +78,12 @@ class Validator(ExceptionInfoMixin, models.Model):
     def get_num_allowed_to_fail(self):
         return self.failing_objects.filter(allowed_to_fail=True).count()
 
-    @property
-    def model_info(self) -> Optional[ModelInfo]:
-        """ return the ModelInfo that this record represents """
-        model = self.content_type.model_class()
-        if model in REGISTRY:
-            return REGISTRY[model]
+    # @property
+    # def model_info(self) -> Optional[ModelInfo]:
+    #     """ return the ModelInfo that this record represents """
+    #     model = self.content_type.model_class()
+    #     if model in REGISTRY:
+    #         return REGISTRY[model]
 
 
 class FailingObject(models.Model):
@@ -100,13 +94,19 @@ class FailingObject(models.Model):
         related_name="failing_objects",
         db_index=True,
     )
+    content_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        related_name='+',
+    )
     object_pk = models.PositiveIntegerField()
+    content_object = GenericForeignKey("content_type", "object_pk")
 
     comment = models.TextField(blank=True)
 
     # manual entry by User - this object is allowed to fail validation
     allowed_to_fail = models.BooleanField(default=False)
-    allowed_to_fail_justification = models.TextField(blank=True)
+    allowed_to_fail_justification = models.TextField(blank=True, verbose_name="justification")
 
     # control variable: existing records are marked as invalid prior to
     # running the validation so that objects that have been marked

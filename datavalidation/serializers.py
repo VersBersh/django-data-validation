@@ -7,7 +7,7 @@ from .models import Validator, FailingObject
 class FailingObjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = FailingObject
-        exclude = ("valid",)
+        exclude = ("content_type", "valid")
 
     admin_page = serializers.ReadOnlyField()
 
@@ -15,7 +15,7 @@ class FailingObjectSerializer(serializers.ModelSerializer):
 class ValidatorSerializer(EnumSupportSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Validator
-        exclude = ("content_type",)
+        exclude = ()
 
     num_failing = serializers.ReadOnlyField()
     num_allowed_to_fail = serializers.ReadOnlyField()

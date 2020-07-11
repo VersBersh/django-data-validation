@@ -67,7 +67,7 @@ class Animal(models.Model):
     name = models.CharField(max_length=50)
     carnivorous = models.BooleanField()
     predator_index = models.PositiveIntegerField()
-    prey = models.ManyToManyField("Animal")
+    prey = models.ManyToManyField("Animal", blank=True)
 
     objects = AnimalManager()
 

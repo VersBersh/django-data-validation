@@ -21,8 +21,8 @@
 
 # other
 /_notes
-/datavalidation/static/datavalidation/dev
-/datavalidation/templates/datavalidation/dev
+/datavalidation/static/datavalidation/admin/dev
+/datavalidation/templates/datavalidation/admin/dev
 /deps/pip.all
 /setup/test_proj.pth
 /test_proj/_debug.py

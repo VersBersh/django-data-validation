@@ -52,8 +52,8 @@ const resolveModule = (resolveFn, filePath) => {
 module.exports = {
   dotenv: resolveApp('.env'),
   appPath: resolveApp('.'),
-  appBuild: resolveApp('../static/datavalidation'),
-  djangoTemplateDir: resolveApp('../templates/datavalidation'),
+  appBuild: resolveApp('../static/datavalidation/admin'),
+  djangoTemplateDir: resolveApp('../templates/datavalidation/admin'),
   appPublic: resolveApp('public'),
   appHtml: resolveApp('public/index.template'),
   appIndexJs: resolveModule(resolveApp, 'src/index'),

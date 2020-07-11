@@ -38,7 +38,7 @@ class ResultHandlerMixin:
         result, exinfo = check_return_value(retval, exinfo)
         allowed_to_fail: Optional[bool] = None
 
-        if result is FAIL:
+        if result is FAIL or result is EXCEPTION:
             # save the failing object
             extra_args = {}
             if isinstance(retval, FAIL):
@@ -48,9 +48,12 @@ class ResultHandlerMixin:
                         extra_args["allowed_to_fail_justification"] = retval.comment
                 elif retval.comment:
                     extra_args["comment"] = retval.comment
+            elif result is EXCEPTION:
+                extra_args["comment"] = exinfo["exc_type"]
 
             fobj, _ = FailingObject.objects.update_or_create(
                 validator_id=valinfo.get_pk(),
+                content_type_id=valinfo.model_info.content_type_id,
                 object_pk=obj.pk,
                 defaults={"valid": True, **extra_args}
             )
@@ -93,7 +96,11 @@ class ResultHandlerMixin:
                     qs_update.update(valid=True, comment="")
                     pks_updated = qs_update.values_list("object_pk", flat=True)
                     objects_to_create = [
-                        FailingObject(validator_id=vpk, object_pk=pk, comment="", valid=True)
+                        FailingObject(validator_id=vpk,
+                                      content_type_id=valinfo.model_info.content_type_id,
+                                      object_pk=pk,
+                                      comment="",
+                                      valid=True)
                         for pk in set(object_pks) - set(pks_updated)
                     ]
                     FailingObject.objects.bulk_create(objects_to_create)
@@ -338,7 +345,7 @@ class ObjectValidationRunner(ResultHandlerMixin):
          :returns: True if there was no validation erros
         """
         FailingObject.objects.filter(
-            validator__content_type=self.model_info.content_type_id,
+            content_type=self.model_info.content_type_id,
             object_pk=self.obj.pk
         ).update(valid=False)
 
@@ -348,7 +355,7 @@ class ObjectValidationRunner(ResultHandlerMixin):
         ])
 
         qs = FailingObject.objects.filter(
-            validator__content_type=self.model_info.content_type_id,
+            content_type=self.model_info.content_type_id,
             object_pk=self.obj.pk,
             valid=False
         )
