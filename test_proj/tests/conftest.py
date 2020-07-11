@@ -17,7 +17,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
     with django_db_blocker.unblock():
         for modelinfo in REGISTRY.values():
             for valinfo in modelinfo.validators.values():
-                valinfo.get_pk()  # creates the record if it doesn't exist
+                valinfo.validator_id  # creates the record if it doesn't exist
 
 
 @pytest.fixture(scope="session")

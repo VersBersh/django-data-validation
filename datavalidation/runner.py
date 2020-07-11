@@ -52,7 +52,7 @@ class ResultHandlerMixin:
                 extra_args["comment"] = exinfo["exc_type"]
 
             fobj, _ = FailingObject.objects.update_or_create(
-                validator_id=valinfo.get_pk(),
+                validator_id=valinfo.validator_id,
                 content_type_id=valinfo.model_info.content_type_id,
                 object_pk=obj.pk,
                 defaults={"valid": True, **extra_args}
@@ -77,8 +77,8 @@ class ResultHandlerMixin:
         if summary.status == Status.PASSING:
             extra_args["last_run_time"] = datetime.now()
 
-        vpk = valinfo.get_pk()
-        Validator.objects.filter(pk=vpk).update(
+        validator_id = valinfo.validator_id
+        Validator.objects.filter(id=validator_id).update(
             status=summary.status,
             num_passing=summary.num_passing,
             num_na=summary.num_na,
@@ -90,13 +90,13 @@ class ResultHandlerMixin:
             with transaction.atomic():
                 for object_pks in chunk(summary.failures, 1000):
                     qs_update = FailingObject.objects.filter(
-                        validator_id=vpk,
+                        validator_id=validator_id,
                         object_pk__in=object_pks
                     ).select_for_update()
                     qs_update.update(valid=True, comment="")
                     pks_updated = qs_update.values_list("object_pk", flat=True)
                     objects_to_create = [
-                        FailingObject(validator_id=vpk,
+                        FailingObject(validator_id=validator_id,
                                       content_type_id=valinfo.model_info.content_type_id,
                                       object_pk=pk,
                                       comment="",
@@ -128,8 +128,7 @@ class InstanceMethodRunner(ResultHandlerMixin):
         # mark failing objects from the previous run as invalid, but don't
         # delete them yet so we don't lose any with allowed_to_fail=True
         for valinfo in self.validator_infos:
-            qs = FailingObject.objects.filter(validator_id=valinfo.get_pk())
-            qs.update(valid=False)
+            FailingObject.objects.filter(validator_id=valinfo.validator_id).update(valid=False)
 
         # iterate over each object in the table and call each data
         # validator on it. When an exception is encountered on a validator
@@ -140,7 +139,7 @@ class InstanceMethodRunner(ResultHandlerMixin):
 
         # now we can delete the invalid objects
         for valinfo in self.validator_infos:
-            qs = FailingObject.objects.filter(validator_id=valinfo.get_pk(), valid=False)
+            qs = FailingObject.objects.filter(validator_id=valinfo.validator_id, valid=False)
             # noinspection PyProtectedMember
             qs._raw_delete(qs.db)
 
@@ -236,15 +235,14 @@ class ClassMethodRunner(ResultHandlerMixin):
             containing the validation results
         """
         for valinfo in self.validator_infos:
-            qs = FailingObject.objects.filter(validator_id=valinfo.get_pk())
-            qs.update(valid=False)
+            FailingObject.objects.filter(validator_id=valinfo.validator_id).update(valid=False)
 
         for valinfo in self.validator_infos:
             self.run_validator(valinfo)
 
         # clean up any remaining invalid FailingObjects
         for valinfo in self.validator_infos:
-            qs = FailingObject.objects.filter(validator_id=valinfo.get_pk(), valid=False)
+            qs = FailingObject.objects.filter(validator_id=valinfo.validator_id, valid=False)
             # noinspection PyProtectedMember
             qs._raw_delete(qs.db)
 
@@ -344,8 +342,9 @@ class ObjectValidationRunner(ResultHandlerMixin):
 
          :returns: True if there was no validation erros
         """
+        validator_ids = [v.validator_id for v in self.validator_infos]
         FailingObject.objects.filter(
-            content_type=self.model_info.content_type_id,
+            validator_id__in=validator_ids,
             object_pk=self.obj.pk
         ).update(valid=False)
 
@@ -355,7 +354,7 @@ class ObjectValidationRunner(ResultHandlerMixin):
         ])
 
         qs = FailingObject.objects.filter(
-            content_type=self.model_info.content_type_id,
+            validator_id__in=validator_ids,
             object_pk=self.obj.pk,
             valid=False
         )

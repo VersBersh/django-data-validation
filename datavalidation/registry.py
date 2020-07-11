@@ -1,6 +1,5 @@
 from collections import defaultdict
 import inspect
-from functools import lru_cache
 from typing import (
     Callable, DefaultDict, Dict, List, Optional,
     Sequence, Tuple, Type, Union
@@ -40,8 +39,8 @@ class ValidatorInfo:
     def __hash__(self):
         return hash(str(self))
 
-    @lru_cache()
-    def get_pk(self) -> int:
+    @cached_property
+    def validator_id(self) -> int:
         """ return the primary key of the corresponding ValidationMethod """
         from .models import Validator
         obj, _ = Validator.objects.update_or_create(
@@ -53,7 +52,7 @@ class ValidatorInfo:
                 "description": self.description,
             }
         )
-        return obj.pk
+        return obj.id
 
 
 @dataclass

@@ -120,7 +120,7 @@ def test_rest_api_failing_objects_list_for_validator(auth_client):
 
     results = ModelValidationRunner(Animal, method_names=["check_alliteration"]).run()
     valinfo, _ = results[0]
-    validator_id = valinfo.get_pk()
+    validator_id = valinfo.validator_id
 
     url = encode_url_with_params(
         reverse("admin:failingobject-list"),
