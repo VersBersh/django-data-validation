@@ -7,8 +7,8 @@ from django.db import models
 from django.shortcuts import render
 from django.urls import include
 
-from .viewsets import router
-from .views import object_counts, csrf_info
+from datavalidation.viewsets import router
+from datavalidation.views import object_counts, csrf_info
 
 
 class Summary(models.Model):
@@ -20,12 +20,13 @@ class Summary(models.Model):
 
 @admin.register(Summary)
 class ValidationAdmin(admin.ModelAdmin):
+    """ hook up react to the django admin """
     def get_urls(self):
         admin_view = self.admin_site.admin_view
         if getattr(settings, "DATAVALIDATION_DEVELOPMENT", False):
-            template_name = "datavalidation/dev/index.html"
+            template_name = "datavalidation/admin/dev/index.html"
         else:
-            template_name = "datavalidation/index.html"
+            template_name = "datavalidation/admin/index.html"
         view = partial(render, template_name=template_name)
         return [
             url(r"^api/", include(router.urls)),

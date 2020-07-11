@@ -65,7 +65,7 @@ module.exports = function(webpackEnv) {
   const envDir = isEnvDevelopment ? "dev" : "";
   paths.appBuild = path.join(paths.appBuild, envDir);
   paths.djangoTemplateDir = path.join(paths.djangoTemplateDir, envDir);
-  const staticRoot = path.join("/static/datavalidation", envDir);
+  const staticRoot = path.join("/static/datavalidation/admin", envDir);
 
   // Variable used for enabling profiling in Production
   // passed into alias object. Uses a flag if passed into the build command

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from datavalidation.admin_mixin import DataValidationMixin
+from datavalidation.admin import DataValidationMixin
 
 from .models import Animal, Seminar
 

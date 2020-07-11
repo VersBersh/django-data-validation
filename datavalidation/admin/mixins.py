@@ -10,9 +10,9 @@ from django.forms import Textarea
 from django.http import HttpRequest, QueryDict
 from django.utils.safestring import mark_safe
 
-from .models import FailingObject
-from .runner import ObjectValidationRunner
-from .utils import partition
+from datavalidation.models import FailingObject
+from datavalidation.runner import ObjectValidationRunner
+from datavalidation.utils import partition
 
 
 class DataValidationInline(GenericTabularInline):
