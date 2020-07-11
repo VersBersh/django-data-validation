@@ -380,6 +380,8 @@ class ObjectValidationRunner(ResultHandlerMixin):
             valinfo, self.obj, retval, exinfo
         )
 
+        self.update_validator(valinfo, result, exinfo)
+
         if result is PASS or result is NA:
             return True
         elif result is FAIL:
@@ -388,3 +390,28 @@ class ObjectValidationRunner(ResultHandlerMixin):
             return False
         else:
             raise RuntimeError("that's.. impossible!")
+
+    @staticmethod
+    def update_validator(valinfo: ValidatorInfo,
+                         result: Type[Result],
+                         exinfo: Optional[dict]
+                         ) -> None:
+        # running validation for one object may change the status of the
+        # entire Validator (e.g. if this object was the only one failing)
+        with transaction.atomic():
+            validator = Validator.objects.select_for_update().get(id=valinfo.validator_id)
+            if validator.status == Status.EXCEPTION:
+                return  # don't update
+            elif result is EXCEPTION:
+                validator.status = Status.EXCEPTION
+                validator.exc_type = exinfo["exc_type"]
+                validator.exc_traceback = exinfo["exc_traceback"]
+                validator.exc_obj_pk = exinfo["exc_obj_pk"]
+                validator.save()
+                return
+
+            num_failing = validator.failing_objects.filter(allowed_to_fail=False).count()
+            new_status = Status.PASSING if num_failing == 0 else Status.FAILING
+            if validator.status != new_status:
+                validator.status = new_status
+                validator.save()
