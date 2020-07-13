@@ -8,9 +8,7 @@
 DJANGO-DATA-VALIDATION
 ++++++++++++++++++++++
 
-.. warning::
-
-    this app is still in pre-alpha. Breaking changes to come...
+** :warning: this app is still in pre-alpha. expect breaking changes **
 
 A Django app to manage the validation of your data. Inspired by `django-data-tests <https://github.com/andrewbird2/django-data-tests>`_
 
