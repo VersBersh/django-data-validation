@@ -1,4 +1,4 @@
-.PHONY: clean deps
+.PHONY: clean deps freshdb
 
 clean:
 	rm -fr build/
@@ -24,3 +24,12 @@ release: clean lint build
 deps:
 	cat ./deps/pip.base | sed -e 's/\n*$$//' > ./deps/pip.all
 	cat ./deps/pip.dev | sed -e 's/^\n*//' >> ./deps/pip.all
+
+freshdb:
+	dropdb ddv
+	createdb ddv
+	cd test_proj; \
+	python ./manage.py makemigrations; \
+	python ./manage.py migrate; \
+	python ./manage.py createsuperuser; \
+	python ./manage.py add_test_data;
