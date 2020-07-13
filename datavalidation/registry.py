@@ -44,10 +44,10 @@ class ValidatorInfo:
         """ return the primary key of the corresponding ValidationMethod """
         from .models import Validator
         obj, _ = Validator.objects.update_or_create(
+            app_label=self.model_info.app_label,
+            model_name=self.model_info.model_name,
             method_name=self.method_name,
             defaults={
-                "app_label": self.model_info.app_label,
-                "model_name": self.model_info.model_name,
                 "is_class_method": self.is_class_method,
                 "description": self.description,
             }
