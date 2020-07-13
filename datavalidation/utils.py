@@ -19,20 +19,6 @@ def is_class_method(method: Callable, owner: Type) -> bool:
     return inspect.ismethod(method) and getattr(method, "__self__", None) is owner
 
 
-# def get_date_modified_field_name(model: Type[models.Model]) -> Optional[str]:
-#     """ return the field of the model that hold the date modified """
-#     # first check if the user specified it in the Meta class
-#     field_name = getattr(model._meta, "date_modified_field", None)
-#     if field_name is not None:
-#         assert hasattr(model, field_name), f"{model.__name__} has no field {field_name}"
-#         return field_name
-#
-#     # else return an auto_now field
-#     for field in model._meta.fields:
-#         if getattr(field, "auto_now", False):
-#             return field.name
-
-
 def chunk(iterable: Iterable[T], size: int) -> Iterable[T]:
     """ iterate an iterable in chunks """
     it = iter(iterable)
