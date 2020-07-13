@@ -24,7 +24,7 @@ function buildNestedValidatorSummary(validators: IValidator[]): IAppList {
         if (!result.hasOwnProperty(validator.app_label)) {
             result[validator.app_label] = {
                 appLabel: validator.app_label,
-                status: Status.PASSING,
+                status: Status.UNINITIALIZED,
                 models: {}
             } as IApp;
         }
@@ -34,7 +34,7 @@ function buildNestedValidatorSummary(validators: IValidator[]): IAppList {
             app.models[validator.model_name] = {
                 appLabel: validator.app_label,
                 modelName: validator.model_name,
-                status: Status.PASSING,
+                status: Status.UNINITIALIZED,
                 validators: []
             } as IModel
         }
@@ -42,25 +42,29 @@ function buildNestedValidatorSummary(validators: IValidator[]): IAppList {
     }
 
     // update the status for each App and Model level summary
-    for (const app of Object.values(result)) {
-        for (const model of Object.values(app.models)) {
-            for (const validator of model.validators) {
-                if (validator.status === Status.FAILING) {
-                    model.status = Status.FAILING ;
-                }
-                else if (validator.status === Status.EXCEPTION) {
-                    model.status = Status.EXCEPTION;
-                    break;
-                }
+    type HasStatus = {status: Status};
+    const aggregateStatus = (parent: HasStatus, children: HasStatus[]) => {
+        for (const child of children) {
+            if (child.status === Status.PASSING &&
+                parent.status === Status.UNINITIALIZED) {
+                parent.status = Status.PASSING
             }
-            if (model.status === Status.FAILING) {
-                app.status = Status.FAILING;
+            else if (child.status === Status.FAILING) {
+                parent.status = Status.FAILING ;
             }
-            else if (model.status === Status.EXCEPTION) {
-                app.status = Status.EXCEPTION;
+            else if (child.status === Status.EXCEPTION) {
+                parent.status = Status.EXCEPTION;
+                break;
             }
         }
     }
+    for (const app of Object.values(result)) {
+        for (const model of Object.values(app.models)) {
+            aggregateStatus(model, model.validators);
+        }
+        aggregateStatus(app, Object.values(app.models));
+    }
+
     return result;
 }
 

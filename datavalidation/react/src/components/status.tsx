@@ -2,14 +2,16 @@ import * as React from 'react';
 import {FC, SVGProps} from 'react';
 
 import {Status} from "../data/enums";
-import {ReactComponent as Tick} from '../icons/tick.svg';
+import {ReactComponent as Circle} from '../icons/circle-full.svg';
 import {ReactComponent as Cross} from '../icons/cross.svg';
 import {ReactComponent as Exclamation} from '../icons/exclamation.svg';
+import {ReactComponent as Tick} from '../icons/tick.svg';
 
 
 const getIcon = (status: Status): FC<SVGProps<SVGSVGElement>> => {
     switch (status) {
         case Status.UNINITIALIZED:
+            return Circle;
         case Status.PASSING:
             return Tick;
         case Status.FAILING:
