@@ -5,10 +5,11 @@ import pytest
 
 from animalconference.models import Animal
 from datavalidation.models import Validator
-from datavalidation.runner import ModelValidationRunner
+from datavalidation.results import Status
+from datavalidation.runner import ModelValidationRunner, ObjectValidationRunner
 
 
-def test_runner_with_bad_model():
+def test_model_runner_with_bad_model():
     """ check that ModelValidationRunner handles bad input """
     try:
         ModelValidationRunner(Validator).run()
@@ -17,7 +18,7 @@ def test_runner_with_bad_model():
         assert e.args == ("no data validation methods on model Validator",)
 
 
-def test_runner_with_bad_method():
+def test_model_runner_with_bad_method():
     """ check that ModelValidationRunner handles bad input """
     try:
         ModelValidationRunner(Animal, method_names=["foobar"]).run()
@@ -27,7 +28,7 @@ def test_runner_with_bad_method():
 
 
 @pytest.mark.django_db
-def test_runner_cli_success(valid_animals):
+def test_model_runner_cli_success(valid_animals):
     """ test ./manage.py run_data_validation --models animalconference.Animal
 
      the valid_animals fixture was loaded so this should pass
@@ -38,7 +39,7 @@ def test_runner_cli_success(valid_animals):
 
 
 @pytest.mark.django_db
-def test_runner_cli_failure(valid_animals):
+def test_model_runner_cli_failure(valid_animals):
     """ test ./manage.py run_data_validation
 
      Seminar model contains data_validators that hit exceptions, so this
@@ -47,3 +48,28 @@ def test_runner_cli_failure(valid_animals):
     with mock.patch("sys.exit") as mocked_exit:
         call_command("run_data_validation")
         mocked_exit.assert_called_with(1)
+
+
+@pytest.mark.django_db
+def test_object_runner(valid_animals):
+    """ test the ObjectValidationRunner """
+    validator = Validator.objects.get(
+        app_label="animalconference",
+        model_name="Animal",
+        method_name="check_alliteration"
+    )
+    assert validator.status == Status.UNINITIALIZED
+
+    animal = Animal.objects.first()
+    result = ObjectValidationRunner(animal).run()
+    assert result is True
+
+    validator.refresh_from_db()
+    assert validator.status == Status.PASSING
+
+    animal = Animal.objects.test_create(name="Anna", species="Bat")
+    result = ObjectValidationRunner(animal).run()
+    assert result is False
+
+    validator.refresh_from_db()
+    assert validator.status == Status.FAILING
