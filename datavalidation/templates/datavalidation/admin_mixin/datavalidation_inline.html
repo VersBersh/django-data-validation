@@ -1,9 +1,9 @@
+{% for inline_admin_formset in datavalidation_formsets %}
 <div
-    {% if hide_datavalidation_inline %}
+    {% if inline_admin_formset.formset.count == 0 %}
     style="display: none; overflow: hidden; height: 0; width: 0;"
     {% endif %}
 >
-    {% for inline_admin_formset in datavalidation_formsets %}
-        {% include inline_admin_formset.opts.template %}
-    {% endfor %}
+    {% include inline_admin_formset.opts.template %}
 </div>
+{% endfor %}

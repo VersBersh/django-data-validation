@@ -51,11 +51,15 @@ class ResultHandlerMixin:
             elif result is EXCEPTION:
                 extra_args["comment"] = exinfo["exc_type"]
 
-            fobj, _ = FailingObject.objects.update_or_create(
+            fobj, _ = FailingObject.all_objects.update_or_create(
                 validator_id=valinfo.validator_id,
                 content_type_id=valinfo.model_info.content_type_id,
                 object_pk=obj.pk,
-                defaults={"valid": True, **extra_args}
+                defaults={
+                    "is_valid": True,
+                    "is_exception": result is EXCEPTION,
+                    **extra_args
+                }
             )
 
             # if the object was (previously) marked as allowed to fail
@@ -89,18 +93,19 @@ class ResultHandlerMixin:
         if summary.failures is not None and not skip_failures:
             with transaction.atomic():
                 for object_pks in chunk(summary.failures, 1000):
-                    qs_update = FailingObject.objects.filter(
+                    qs_update = FailingObject.all_objects.filter(
                         validator_id=validator_id,
                         object_pk__in=object_pks
                     ).select_for_update()
-                    qs_update.update(valid=True, comment="")
+                    qs_update.update(is_valid=True, is_exception=False, comment="")
                     pks_updated = qs_update.values_list("object_pk", flat=True)
                     objects_to_create = [
                         FailingObject(validator_id=validator_id,
                                       content_type_id=valinfo.model_info.content_type_id,
                                       object_pk=pk,
+                                      is_exception=False,
                                       comment="",
-                                      valid=True)
+                                      is_valid=True)
                         for pk in set(object_pks) - set(pks_updated)
                     ]
                     FailingObject.objects.bulk_create(objects_to_create)
@@ -128,7 +133,9 @@ class InstanceMethodRunner(ResultHandlerMixin):
         # mark failing objects from the previous run as invalid, but don't
         # delete them yet so we don't lose any with allowed_to_fail=True
         for valinfo in self.validator_infos:
-            FailingObject.objects.filter(validator_id=valinfo.validator_id).update(valid=False)
+            FailingObject.all_objects.filter(
+                validator_id=valinfo.validator_id
+            ).update(is_valid=False)
 
         # iterate over each object in the table and call each data
         # validator on it. When an exception is encountered on a validator
@@ -139,7 +146,9 @@ class InstanceMethodRunner(ResultHandlerMixin):
 
         # now we can delete the invalid objects
         for valinfo in self.validator_infos:
-            qs = FailingObject.objects.filter(validator_id=valinfo.validator_id, valid=False)
+            qs = FailingObject.all_objects.filter(
+                validator_id=valinfo.validator_id, is_valid=False, allowed_to_fail=False
+            )
             # noinspection PyProtectedMember
             qs._raw_delete(qs.db)
 
@@ -235,14 +244,18 @@ class ClassMethodRunner(ResultHandlerMixin):
             containing the validation results
         """
         for valinfo in self.validator_infos:
-            FailingObject.objects.filter(validator_id=valinfo.validator_id).update(valid=False)
+            FailingObject.all_objects.filter(
+                validator_id=valinfo.validator_id
+            ).update(is_valid=False)
 
         for valinfo in self.validator_infos:
             self.run_validator(valinfo)
 
         # clean up any remaining invalid FailingObjects
         for valinfo in self.validator_infos:
-            qs = FailingObject.objects.filter(validator_id=valinfo.validator_id, valid=False)
+            qs = FailingObject.all_objects.filter(
+                validator_id=valinfo.validator_id, is_valid=False, allowed_to_fail=False
+            )
             # noinspection PyProtectedMember
             qs._raw_delete(qs.db)
 
@@ -340,20 +353,20 @@ class ObjectValidationRunner(ResultHandlerMixin):
          :returns: True if there was no validation erros
         """
         validator_ids = [v.validator_id for v in self.validator_infos]
-        FailingObject.objects.filter(
-            validator_id__in=validator_ids,
-            object_pk=self.obj.pk
-        ).update(valid=False)
+        FailingObject.all_objects.filter(
+            validator_id__in=validator_ids, object_pk=self.obj.pk
+        ).update(is_valid=False)
 
         result = all([
             self.run_for_object(valinfo)
             for valinfo in self.validator_infos
         ])
 
-        qs = FailingObject.objects.filter(
+        qs = FailingObject.all_objects.filter(
             validator_id__in=validator_ids,
             object_pk=self.obj.pk,
-            valid=False
+            is_valid=False,
+            allowed_to_fail=False
         )
         # noinspection PyProtectedMember
         qs._raw_delete(qs.db)
@@ -407,7 +420,7 @@ class ObjectValidationRunner(ResultHandlerMixin):
             validator.save()
             return
 
-        failures = validator.failing_objects.filter(valid=True, allowed_to_fail=False)
+        failures = validator.failing_objects.filter(is_valid=True, allowed_to_fail=False)
         new_status = Status.PASSING if failures.count() == 0 else Status.FAILING
         if validator.status != new_status:
             validator.status = new_status

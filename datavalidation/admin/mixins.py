@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.contrib.admin.helpers import InlineAdminFormSet
 from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.contenttypes.admin import GenericTabularInline
+from django.contrib.contenttypes.forms import BaseGenericInlineFormSet
 from django.core.checks import messages
 from django.db import models
 from django.forms import Textarea
@@ -15,33 +16,71 @@ from datavalidation.runner import ObjectValidationRunner
 from datavalidation.utils import partition
 
 
-class DataValidationInline(GenericTabularInline):
+class BaseFormSet(BaseGenericInlineFormSet):
+    is_exception: bool = None
+
+    def get_queryset(self):
+        if not hasattr(self, "_queryset"):
+            self._queryset = super().get_queryset().filter(  # noqa
+                is_exception=self.is_exception, is_valid=True
+            )
+        return self._queryset
+
+    @property
+    def count(self):
+        return len(self.get_queryset())
+
+
+class DataValidationExceptionFormSet(BaseFormSet):
+    is_exception = True
+
+
+class DataValidationFailureFormSet(BaseFormSet):
+    is_exception = False
+
+
+class BaseDataValidationInline(GenericTabularInline):
     class Media:
         css = {"all": ("datavalidation/admin_mixin/datavalidation-admin-mixin.css",)}
 
     template = "datavalidation/admin_mixin/tabular.html"
 
-    verbose_name = "Data Validation"
-    verbose_name_plural = "Data Validation"
-
     model = FailingObject
     ct_field = "content_type"
     ct_fk_field = "object_pk"
 
-    fields = ("description", "comment", "allowed_to_fail", "allowed_to_fail_justification")
-    readonly_fields = ("description", "comment")
     can_delete = False
     max_num = 0
 
     formfield_overrides = {
         models.TextField: {
-            "widget": Textarea(attrs={"rows": 1, "cols": 40, "style": "resize: horizontal;"})
+            "widget": Textarea(attrs={
+                "rows": 1, "style": "width: 95%; resize: vertical; min-height: 1.25em"
+            })
         },
     }
 
     @staticmethod
     def description(obj: FailingObject) -> str:
         return obj.validator.description
+
+
+class DataValidationFailureInline(BaseDataValidationInline):
+    formset = DataValidationFailureFormSet
+    html_classes = "datavalidation-inline datavalidation-failure"
+    verbose_name = "Data Validation Failure"
+    verbose_name_plural = "Data Validation Failures"
+    fields = ("description", "comment", "allowed_to_fail", "allowed_to_fail_justification")
+    readonly_fields = ("description", "comment")
+
+
+class DataValidationExceptionInline(BaseDataValidationInline):
+    formset = DataValidationExceptionFormSet
+    html_classes = "datavalidation-inline datavalidation-exception"
+    verbose_name = "Data Validation Exception"
+    verbose_name_plural = "Data Validation Exceptions"
+    fields = ("description", "comment")
+    readonly_fields = ("description", "comment")
 
 
 if TYPE_CHECKING:
@@ -92,7 +131,7 @@ class DataValidationMixin(_Base):
         # inject DataValidationInline here so that the ModelAdmin will do
         # the processing required to include the inline in the change form
         inlines = super().get_inlines(request, obj).copy()
-        inlines.append(DataValidationInline)
+        inlines.extend([DataValidationFailureInline, DataValidationExceptionInline])
         return inlines
 
     def render_change_form(self, request: HttpRequest, context: dict, *args, **kwargs):
@@ -100,12 +139,9 @@ class DataValidationMixin(_Base):
         # model admin has processed for us and update the context dict
         formsets: List[InlineAdminFormSet] = context["inline_admin_formsets"]
         datavalidation_formsets, other_formsets = partition(
-            formsets, lambda fs: isinstance(fs.opts, DataValidationInline)
+            formsets, lambda fs: isinstance(fs.opts, BaseDataValidationInline)
         )
-        assert len(datavalidation_formsets) == 1
-        qs = datavalidation_formsets[0].formset.get_queryset()
         context.update({
-            "hide_datavalidation_inline": len(qs) == 0,
             "datavalidation_formsets": datavalidation_formsets,
             "inline_admin_formsets": other_formsets,
         })

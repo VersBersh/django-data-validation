@@ -7,7 +7,7 @@ from .models import Validator, FailingObject
 class FailingObjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = FailingObject
-        exclude = ("content_type", "valid")
+        exclude = ("content_type", "is_valid", "is_exception")
 
     admin_page = serializers.ReadOnlyField()
 

@@ -103,6 +103,11 @@ class Validator(ExceptionInfoMixin, models.Model):
                 validator.save()
 
 
+class FailingObjectManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_valid=True)
+
+
 class FailingObject(models.Model):
     """ objects that did not pass data validation """
     validator = models.ForeignKey(
@@ -118,6 +123,7 @@ class FailingObject(models.Model):
     )
     object_pk = models.PositiveIntegerField()
     content_object = GenericForeignKey("content_type", "object_pk")
+    is_exception = models.BooleanField()
 
     comment = models.TextField(blank=True)
 
@@ -128,7 +134,10 @@ class FailingObject(models.Model):
     # control variable: existing records are marked as invalid prior to
     # running the validation so that objects that have been marked
     # allowed_to_fail by the user are not deleted
-    valid = models.BooleanField()
+    is_valid = models.BooleanField()
+
+    objects = FailingObjectManager()
+    all_objects = models.Manager()
 
     class Meta:
         index_together = ("validator", "object_pk")

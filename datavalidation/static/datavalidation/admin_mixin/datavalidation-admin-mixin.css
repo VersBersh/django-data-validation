@@ -1,7 +1,47 @@
 
-.datavalidation-inline h2 {
+.datavalidation-inline table {
+    table-layout: fixed;
+    overflow: hidden;
+}
+
+/* table columns widths */
+.datavalidation-failure .col1 {
+    width: 20%;
+}
+.datavalidation-failure .col2 {
+    width: 30%;
+}
+.datavalidation-failure .col3 {
+    width: 10%;
+}
+.datavalidation-failure .col4 {
+    width: 40%;
+}
+
+
+.datavalidation-exception .col1 {
+    width: 20%;
+}
+.datavalidation-exception .col2 {
+    width: 30%;
+}
+.datavalidation-exception .col3 {
+    width: 50%;
+}
+.datavalidation-exception .col4 {
+    width: 0;
+}
+
+
+/* inline formset header colour */
+.datavalidation-failure h2 {
     background-color: #ba2121;  /* default red in django-admin */
 }
+
+.datavalidation-exception h2 {
+    background-color: #7e8482;
+}
+
 
  /* hide the name shown in each row of the tabular inline */
 .datavalidation-inline td.original p {
