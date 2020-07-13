@@ -64,8 +64,10 @@ class DataValidationMixin(_Base):
         # related failing objects have been saved to the database already.
         assert request.method == "POST"
         assert obj is not None
+        # refresh the statuses of class-method validators in case one was
+        # marked allowed_to_fail. Instance-method validators will be
+        # refreshed in ObjectValidationRunner
         Validator.refresh_statuses(classmethods_only=True)
-        print("RUNNING VALIDATION")
         result = ObjectValidationRunner(obj).run()
         if not result:
             post: QueryDict = request.POST.copy()  # noqa
