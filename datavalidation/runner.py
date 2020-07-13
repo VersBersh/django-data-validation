@@ -15,7 +15,7 @@ from .results import (
     Result, ResultType, check_return_value,
     Status, SummaryEx,
 )
-from .utils import queryset_iterator, chunk
+from .utils import queryset_iterator, chunk, partition
 
 from .logging import logger
 
@@ -306,19 +306,16 @@ class ModelValidationRunner:
 
         summaries: Dict[str, Tuple[ValidatorInfo, SummaryEx]] = {}
 
-        instance_summaries = InstanceMethodRunner(self.model, [
-            self.model_info.validators[name]
-            for name in self.method_names
-            if not self.model_info.validators[name].is_class_method
-        ]).run()
-        summaries.update({k.method_name: (k, v) for k, v in instance_summaries.items()})
+        validator_infos = [self.model_info.validators[name] for name in self.method_names]
+        classmethod_infos, instancemethod_infos = partition(
+            validator_infos, predicate=lambda valinfo: valinfo.is_class_method
+        )
 
-        class_summaries = ClassMethodRunner(self.model, [
-            self.model_info.validators[name]
-            for name in self.method_names
-            if self.model_info.validators[name].is_class_method
-        ]).run()
+        class_summaries = ClassMethodRunner(self.model, classmethod_infos).run()
         summaries.update({k.method_name: (k, v) for k, v in class_summaries.items()})
+
+        instance_summaries = InstanceMethodRunner(self.model, instancemethod_infos).run()
+        summaries.update({k.method_name: (k, v) for k, v in instance_summaries.items()})
 
         return [summaries[name] for name in self.method_names]
 
@@ -392,26 +389,26 @@ class ObjectValidationRunner(ResultHandlerMixin):
             raise RuntimeError("that's.. impossible!")
 
     @staticmethod
+    @transaction.atomic
     def update_validator(valinfo: ValidatorInfo,
                          result: Type[Result],
                          exinfo: Optional[dict]
                          ) -> None:
         # running validation for one object may change the status of the
         # entire Validator (e.g. if this object was the only one failing)
-        with transaction.atomic():
-            validator = Validator.objects.select_for_update().get(id=valinfo.validator_id)
-            if validator.status == Status.EXCEPTION:
-                return  # don't update
-            elif result is EXCEPTION:
-                validator.status = Status.EXCEPTION
-                validator.exc_type = exinfo["exc_type"]
-                validator.exc_traceback = exinfo["exc_traceback"]
-                validator.exc_obj_pk = exinfo["exc_obj_pk"]
-                validator.save()
-                return
+        validator = Validator.objects.select_for_update().get(id=valinfo.validator_id)
+        if validator.status == Status.EXCEPTION:
+            return  # don't update
+        elif result is EXCEPTION:
+            validator.status = Status.EXCEPTION
+            validator.exc_type = exinfo["exc_type"]
+            validator.exc_traceback = exinfo["exc_traceback"]
+            validator.exc_obj_pk = exinfo["exc_obj_pk"]
+            validator.save()
+            return
 
-            num_failing = validator.failing_objects.filter(allowed_to_fail=False).count()
-            new_status = Status.PASSING if num_failing == 0 else Status.FAILING
-            if validator.status != new_status:
-                validator.status = new_status
-                validator.save()
+        failures = validator.failing_objects.filter(valid=True, allowed_to_fail=False)
+        new_status = Status.PASSING if failures.count() == 0 else Status.FAILING
+        if validator.status != new_status:
+            validator.status = new_status
+            validator.save()

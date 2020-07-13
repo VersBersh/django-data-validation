@@ -10,7 +10,7 @@ from django.forms import Textarea
 from django.http import HttpRequest, QueryDict
 from django.utils.safestring import mark_safe
 
-from datavalidation.models import FailingObject
+from datavalidation.models import FailingObject, Validator
 from datavalidation.runner import ObjectValidationRunner
 from datavalidation.utils import partition
 
@@ -64,7 +64,10 @@ class DataValidationMixin(_Base):
         # related failing objects have been saved to the database already.
         assert request.method == "POST"
         assert obj is not None
-        if not ObjectValidationRunner(obj).run():
+        Validator.refresh_statuses(classmethods_only=True)
+        print("RUNNING VALIDATION")
+        result = ObjectValidationRunner(obj).run()
+        if not result:
             post: QueryDict = request.POST.copy()  # noqa
             post.pop("_save", None)
             post["_continue"] = ["Save and continue editing"]
