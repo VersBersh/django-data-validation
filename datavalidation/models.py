@@ -1,11 +1,12 @@
 import sys
 import traceback
-from typing import Optional, Dict
+from typing import Optional, Dict, TYPE_CHECKING, Type
 
 import enumfields
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
+from django.db.models import QuerySet
 from django.urls import reverse, NoReverseMatch
 
 from .constants import (
@@ -13,6 +14,13 @@ from .constants import (
     MAX_TRACEBACK_LEN,
 )
 from .results import Status
+
+
+__all__ = [
+    "DataValidationMixin",
+    "FailingObject",
+    "Validator",
+]
 
 
 class ExceptionInfoMixin(models.Model):
@@ -102,6 +110,21 @@ class Validator(ExceptionInfoMixin, models.Model):
                 validator.status = new_status
                 validator.save()
 
+    @classmethod
+    def get_status_for_model(cls, model: Type[models.Model]) -> Status:
+        """ return the datavalidation status for the model """
+        ct = ContentType.objects.get_for_model(model._meta.model)
+        statuses = cls.objects.filter(content_type=ct).values_list("status", flat=True)
+        model_status: Status = Status.UNINITIALIZED
+        for status in statuses:
+            if status == Status.PASSING and model_status == Status.UNINITIALIZED:
+                model_status = Status.PASSING
+            elif status == Status.FAILING:
+                model_status = Status.FAILING
+            if status == Status.EXCEPTION:
+                return Status.EXCEPTION
+        return model_status
+
 
 class FailingObjectManager(models.Manager):
     def get_queryset(self):
@@ -155,3 +178,42 @@ class FailingObject(models.Model):
             return reverse(f"admin:{app_label}_{model_name}_change", args=(self.object_pk,))
         except NoReverseMatch:
             return ""
+
+    @classmethod
+    def get_for_object(cls, obj: models.Model):
+        """ return the failing objects for a given object """
+        ct = ContentType.objects.get_for_model(obj._meta.model)
+        return FailingObject.objects.filter(
+            content_type=ct, object_pk=obj.pk
+        )
+
+    @classmethod
+    def get_for_objects(cls, queryset: QuerySet) -> QuerySet:
+        """ return the failing objects for all objects in a queryset """
+        ct = ContentType.objects.get_for_model(queryset.model)
+        return FailingObject.objects.filter(
+            content_type=ct, object_pk__in=queryset.values_list("pk", flat=True)
+        )
+
+
+if TYPE_CHECKING:
+    _Base = models.Model
+else:
+    _Base = object
+
+
+class DataValidationMixin(_Base):
+    @property
+    def datavalidaiton_results(self) -> QuerySet:
+        """ returns the FailingObjects for a given object """
+        return FailingObject.get_for_object(self)
+
+    @property
+    def datavalidation_passing(self) -> bool:
+        """ returns True is datavalidation status is PASSING for the object """
+        return FailingObject.get_for_object(self).filter(allowed_to_fail=False).count() == 0
+
+    @classmethod
+    def datavalidation_status(cls) -> Status:
+        """ return the datavalidation status for the model """
+        return Validator.get_status_for_model(cls)
