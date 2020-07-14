@@ -1,22 +1,20 @@
-from collections import defaultdict
 import inspect
 from functools import lru_cache
 from typing import (
-    Callable, DefaultDict, Dict, List,
-    Optional, Sequence, Tuple, Type, Union,
+    Callable, Dict, Optional, Sequence, Tuple, Type, Union,
 )
 
 from dataclasses import dataclass, field
 from django.db import models
 
 from .constants import MAX_DESCRIPTION_LEN
+from .types import ValidatorType
 from .utils import is_class_method
 
 
 @dataclass
-class _PreLoadMethodInfo:
-    """ information available about a model before all apps are loaded. """
-    method_name: str
+class DecoratorArgs:
+    """ arguments passed to the data_validator decorator """
     select_related: Tuple[str] = field(default_factory=tuple)
     prefetch_related: Tuple[str] = field(default_factory=tuple)
 
@@ -76,12 +74,13 @@ class ModelInfo:
 
 
 class Registry(dict):
+    """ the registry of models and their validators """
     def __init__(self):
         super().__init__()
         self.synced = False
 
     def sync_to_db(self):
-        """ ensure each validator exists in the Validator table """
+        """ ensure a record for each validator exists in the database """
         if self.synced:
             return
         for model_info in self.values():
@@ -90,17 +89,14 @@ class Registry(dict):
         self.synced = True
 
 
-# temporary registry for initialization
-_REGISTRY: DefaultDict[Tuple[str, str], List[_PreLoadMethodInfo]] = defaultdict(list)
-
-REGISTRY: Dict[Type[models.Model], ModelInfo] = Registry()
+REGISTRY = Registry()
 
 
-def data_validator(_method: Optional[Callable] = None,
+def data_validator(_method: Optional[ValidatorType] = None,
                    *,
                    select_related: Union[Sequence, str, None] = None,
                    prefetch_related: Union[Sequence, str, None] = None,
-                   ) -> Callable:
+                   ) -> ValidatorType:
     """ decorator that marks a method as a data validator.
 
      Args:
@@ -127,8 +123,8 @@ def data_validator(_method: Optional[Callable] = None,
 
 def _data_validator(select_related: Union[Sequence, str, None] = None,
                     prefetch_related: Union[Sequence, str, None] = None,
-                    ) -> Callable:
-    """ add method pre-load info to _REGISTRY """
+                    ) -> ValidatorType:
+    """ add decorator arguments to the data validator """
     if select_related is None:
         select_related = set()
     elif isinstance(select_related, str):
@@ -143,23 +139,17 @@ def _data_validator(select_related: Union[Sequence, str, None] = None,
     else:
         prefetch_related = tuple(prefetch_related)
 
-    def decorator(method: Callable) -> Callable:
-        global _REGISTRY
-        method_name = method.__name__
-        app_label = getattr(method, "__module__", "").split(".")[0]
+    def decorator(method: ValidatorType) -> ValidatorType:
         qualname = getattr(method, "__qualname__", "")
         # hack: methods defined on classes have "." in their qualified name,
         # and methods defined within other functions have "<locals>"
         if "." not in qualname or "<locals>" in qualname:
             raise ValueError("data validators must be methods of a class")
-        model_name = qualname.split(".")[0]
-        # nb. we cannot find the content types until all models are loaded,
-        # so this just stores the app labels, model names and method names.
-        _REGISTRY[(app_label, model_name)].append(_PreLoadMethodInfo(
-            method_name=method_name,
+        # nb. we cannot determine anything else until the apps are loaded
+        method._datavalidation_decorator_args = DecoratorArgs(
             select_related=select_related,
             prefetch_related=prefetch_related
-        ))
+        )
         return method
 
     return decorator
@@ -169,32 +159,36 @@ def update_registry():
     """ add all additional info to REGISTRY. """
     from django.apps import apps
     global REGISTRY
-    for (app_label, model_name), preload_infos in _REGISTRY.items():
-        model = apps.get_model(app_label, model_name)
+
+    for model in apps.get_models():
+        validators = inspect.getmembers(
+            model, predicate=lambda m: hasattr(m, "_datavalidation_decorator_args")
+        )
+        if len(validators) == 0:
+            continue
+        app_label = model._meta.app_label  # noqa
+        model_name = model.__name__  # noqa
         REGISTRY[model] = model_info = ModelInfo(
             model=model,
             app_label=app_label,
             model_name=model_name,
         )
-        for plinfo in preload_infos:
-            method = getattr(model, plinfo.method_name)
+        for method_name, validator in validators:
+            args = validator._datavalidation_decorator_args  # noqa
 
             # read the description from the doc string
-            docstring = inspect.getdoc(method)
+            docstring = inspect.getdoc(validator)
             if docstring:
                 description = docstring.split("\n\n")[0].rstrip()
             else:
-                description = plinfo.method_name.replace("_", " ")
+                description = method_name.replace("_", " ")
 
-            model_info.validators[plinfo.method_name] = ValidatorInfo(
+            model_info.validators[method_name] = ValidatorInfo(
                 model_info=model_info,
-                method=method,
-                method_name=plinfo.method_name,
+                method=validator,
+                method_name=method_name,
                 description=description[:MAX_DESCRIPTION_LEN],
-                is_class_method=is_class_method(method, model),
-                select_related=plinfo.select_related,
-                prefetch_related=plinfo.prefetch_related,
+                is_class_method=is_class_method(validator, model),
+                select_related=args.select_related,
+                prefetch_related=args.prefetch_related,
             )
-
-    # the temp registry is no longer needed
-    _REGISTRY.clear()
