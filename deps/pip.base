@@ -3,3 +3,4 @@ django>=2.2
 django-enumfields>=2.0.0
 djangorestframework>=3.1
 termcolor
+tqdm

@@ -5,6 +5,7 @@ from typing import (
 )
 
 from django.db import models, transaction
+from tqdm import tqdm
 
 from .models import (
     ExceptionInfoMixin, FailingObject, Validator
@@ -127,7 +128,7 @@ class InstanceMethodRunner(ResultHandlerMixin):
         self._summaries = {info: SummaryEx() for info in self.validator_infos}
         self.summaries: Dict[ValidatorInfo, SummaryEx] = {}
 
-    def run(self) -> Dict[ValidatorInfo, SummaryEx]:
+    def run(self, show_progress: bool) -> Dict[ValidatorInfo, SummaryEx]:
         """ run all instance-method data validators against all objects
 
          :returns: a dictionary mapping ValidatorInfos to the SummaryEx
@@ -143,8 +144,9 @@ class InstanceMethodRunner(ResultHandlerMixin):
         # iterate over each object in the table and call each data
         # validator on it. When an exception is encountered on a validator
         # remove it from the list
+        progress = tqdm if show_progress else lambda x: x
         valinfos = self.validator_infos.copy()
-        for obj in self.iterate_model_objects():
+        for obj in progress(self.iterate_model_objects()):
             valinfos = list(self.run_for_object(valinfos, obj))
 
         # now we can delete the invalid objects
@@ -307,7 +309,7 @@ class ModelValidationRunner:
                     f"{method} is not a data validator on {self.model_info.model_name}"
                 )
 
-    def run(self) -> List[Tuple[ValidatorInfo, SummaryEx]]:
+    def run(self, show_progress: bool = False) -> List[Tuple[ValidatorInfo, SummaryEx]]:
         """ run validation for specified method
 
          :returns: the list of ValidatorInfos and SummaryEx containing the
@@ -330,7 +332,7 @@ class ModelValidationRunner:
         class_summaries = ClassMethodRunner(self.model, classmethod_infos).run()
         summaries.update({k.method_name: (k, v) for k, v in class_summaries.items()})
 
-        instance_summaries = InstanceMethodRunner(self.model, instancemethod_infos).run()
+        instance_summaries = InstanceMethodRunner(self.model, instancemethod_infos).run(show_progress)  # noqa E501
         summaries.update({k.method_name: (k, v) for k, v in instance_summaries.items()})
 
         return [summaries[name] for name in self.method_names]

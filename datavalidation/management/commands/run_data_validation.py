@@ -37,7 +37,7 @@ class Command(BaseCommand):
 
         totals = Counter()
         for runner in runners:
-            summaries = runner.run()
+            summaries = runner.run(show_progress=True)
             self.print_summaries(summaries)
             for valinfo, summary in summaries:
                 totals[summary.status] += 1
