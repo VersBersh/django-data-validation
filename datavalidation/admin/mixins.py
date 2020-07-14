@@ -1,4 +1,4 @@
-from typing import List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING, Optional
 
 from django.contrib import admin
 from django.contrib.admin.helpers import InlineAdminFormSet
@@ -127,12 +127,16 @@ class DataValidationMixin(_Base):
         self.validate_object(request, obj)
         return super().response_add(request, obj, **kwargs)
 
-    def get_inlines(self, request: HttpRequest, obj: models.Model) -> List[InlineModelAdmin]:
+    def get_inline_instances(self, request: HttpRequest, obj: Optional[models.Model] = None):
         # inject DataValidationInline here so that the ModelAdmin will do
         # the processing required to include the inline in the change form
-        inlines = super().get_inlines(request, obj).copy()
-        inlines.extend([DataValidationFailureInline, DataValidationExceptionInline])
-        return inlines
+        # n.b. in Django 3.0 we can use the get_inline hook instead
+        inline_instances = super().get_inline_instances(request, obj)
+        for inline_class in [DataValidationFailureInline, DataValidationExceptionInline]:
+            inline = inline_class(self.model, self.admin_site)
+            inline.max_num = 0
+            inline_instances.append(inline)
+        return inline_instances
 
     def render_change_form(self, request: HttpRequest, context: dict, *args, **kwargs):
         # here we extract the formset for DataValidationInline, which the
