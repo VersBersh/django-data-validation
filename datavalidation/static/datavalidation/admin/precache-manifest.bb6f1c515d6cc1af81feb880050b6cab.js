@@ -1,5 +1,9 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
+    "revision": "1ab3902fae4072fba8dc63e3c758e885",
+    "url": "//static/media/circle-full.svg"
+  },
+  {
     "revision": "2b62285a4a138c4b5e9f6798a1f70eb2",
     "url": "//static/media/cross.svg"
   },
@@ -16,7 +20,7 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/static/css/2.chunk.css"
   },
   {
-    "revision": "705571d515862fb19563",
+    "revision": "bc65ece4aed88b62bc9b",
     "url": "/static/css/main.chunk.css"
   },
   {
@@ -28,7 +32,7 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/static/js/2.chunk.js.LICENSE.txt"
   },
   {
-    "revision": "705571d515862fb19563",
+    "revision": "bc65ece4aed88b62bc9b",
     "url": "/static/js/main.chunk.js"
   },
   {
