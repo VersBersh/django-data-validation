@@ -1,13 +1,13 @@
 from collections import defaultdict
 import inspect
+from functools import lru_cache
 from typing import (
-    Callable, DefaultDict, Dict, List, Optional,
-    Sequence, Tuple, Type, Union
+    Callable, DefaultDict, Dict, List,
+    Optional, Sequence, Tuple, Type, Union,
 )
 
 from dataclasses import dataclass, field
 from django.db import models
-from django.utils.functional import cached_property  # n.b. in functools from py3.7+
 
 from .constants import MAX_DESCRIPTION_LEN
 from .utils import is_class_method
@@ -39,8 +39,8 @@ class ValidatorInfo:
     def __hash__(self):
         return hash(str(self))
 
-    @cached_property
-    def validator_id(self) -> int:
+    @lru_cache(maxsize=None)
+    def get_validator_id(self) -> int:
         """ return the primary key of the corresponding ValidationMethod """
         from .models import Validator
         obj, _ = Validator.objects.update_or_create(
@@ -69,16 +69,31 @@ class ModelInfo:
     def __hash__(self):
         return hash(str(self))
 
-    @cached_property
-    def content_type_id(self) -> int:
+    @lru_cache(maxsize=None)
+    def get_content_type_id(self) -> int:
         from django.contrib.contenttypes.models import ContentType
         return ContentType.objects.get_for_model(self.model).id
+
+
+class Registry(dict):
+    def __init__(self):
+        super().__init__()
+        self.synced = False
+
+    def sync_to_db(self):
+        """ ensure each validator exists in the Validator table """
+        if self.synced:
+            return
+        for model_info in self.values():
+            for valinfo in model_info.validators.values():
+                valinfo.get_validator_id()
+        self.synced = True
 
 
 # temporary registry for initialization
 _REGISTRY: DefaultDict[Tuple[str, str], List[_PreLoadMethodInfo]] = defaultdict(list)
 
-REGISTRY: Dict[Type[models.Model], ModelInfo] = {}
+REGISTRY: Dict[Type[models.Model], ModelInfo] = Registry()
 
 
 def data_validator(_method: Optional[Callable] = None,

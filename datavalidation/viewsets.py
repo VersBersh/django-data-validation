@@ -2,6 +2,7 @@ from django.db.models import Count, Q, QuerySet
 from rest_framework import pagination, permissions, routers, viewsets
 
 from .models import FailingObject, Validator
+from .registry import REGISTRY
 from .serializers import FailingObjectSerializer, ValidatorSerializer
 
 
@@ -19,6 +20,7 @@ class FailingObjectViewSet(viewsets.ModelViewSet):
     ]
 
     def get_queryset(self) -> QuerySet:
+        REGISTRY.sync_to_db()
         validator_id = self.request.query_params.get("validator_id")
         if validator_id is None:
             return FailingObject.objects.all()

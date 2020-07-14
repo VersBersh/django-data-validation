@@ -52,8 +52,8 @@ class ResultHandlerMixin:
                 extra_args["comment"] = exinfo["exc_type"]
 
             fobj, _ = FailingObject.all_objects.update_or_create(
-                validator_id=valinfo.validator_id,
-                content_type_id=valinfo.model_info.content_type_id,
+                validator_id=valinfo.get_validator_id(),
+                content_type_id=valinfo.model_info.get_content_type_id(),
                 object_pk=obj.pk,
                 defaults={
                     "is_valid": True,
@@ -81,7 +81,7 @@ class ResultHandlerMixin:
         if summary.status == Status.PASSING:
             extra_args["last_run_time"] = datetime.now()
 
-        validator_id = valinfo.validator_id
+        validator_id = valinfo.get_validator_id()
         Validator.objects.filter(id=validator_id).update(
             status=summary.status,
             num_passing=summary.num_passing,
@@ -101,7 +101,7 @@ class ResultHandlerMixin:
                     pks_updated = qs_update.values_list("object_pk", flat=True)
                     objects_to_create = [
                         FailingObject(validator_id=validator_id,
-                                      content_type_id=valinfo.model_info.content_type_id,
+                                      content_type_id=valinfo.model_info.get_content_type_id(),
                                       object_pk=pk,
                                       is_exception=False,
                                       comment="",
@@ -134,7 +134,7 @@ class InstanceMethodRunner(ResultHandlerMixin):
         # delete them yet so we don't lose any with allowed_to_fail=True
         for valinfo in self.validator_infos:
             FailingObject.all_objects.filter(
-                validator_id=valinfo.validator_id
+                validator_id=valinfo.get_validator_id()
             ).update(is_valid=False)
 
         # iterate over each object in the table and call each data
@@ -147,7 +147,7 @@ class InstanceMethodRunner(ResultHandlerMixin):
         # now we can delete the invalid objects
         for valinfo in self.validator_infos:
             qs = FailingObject.all_objects.filter(
-                validator_id=valinfo.validator_id, is_valid=False, allowed_to_fail=False
+                validator_id=valinfo.get_validator_id(), is_valid=False, allowed_to_fail=False
             )
             # noinspection PyProtectedMember
             qs._raw_delete(qs.db)
@@ -245,7 +245,7 @@ class ClassMethodRunner(ResultHandlerMixin):
         """
         for valinfo in self.validator_infos:
             FailingObject.all_objects.filter(
-                validator_id=valinfo.validator_id
+                validator_id=valinfo.get_validator_id()
             ).update(is_valid=False)
 
         for valinfo in self.validator_infos:
@@ -254,7 +254,7 @@ class ClassMethodRunner(ResultHandlerMixin):
         # clean up any remaining invalid FailingObjects
         for valinfo in self.validator_infos:
             qs = FailingObject.all_objects.filter(
-                validator_id=valinfo.validator_id, is_valid=False, allowed_to_fail=False
+                validator_id=valinfo.get_validator_id(), is_valid=False, allowed_to_fail=False
             )
             # noinspection PyProtectedMember
             qs._raw_delete(qs.db)
@@ -352,7 +352,7 @@ class ObjectValidationRunner(ResultHandlerMixin):
 
          :returns: True if there was no validation erros
         """
-        validator_ids = [v.validator_id for v in self.validator_infos]
+        validator_ids = [v.get_validator_id() for v in self.validator_infos]
         FailingObject.all_objects.filter(
             validator_id__in=validator_ids, object_pk=self.obj.pk
         ).update(is_valid=False)
@@ -409,7 +409,7 @@ class ObjectValidationRunner(ResultHandlerMixin):
                          ) -> None:
         # running validation for one object may change the status of the
         # entire Validator (e.g. if this object was the only one failing)
-        validator = Validator.objects.select_for_update().get(id=valinfo.validator_id)
+        validator = Validator.objects.select_for_update().get(id=valinfo.get_validator_id())
         if validator.status == Status.EXCEPTION:
             return  # don't update
         elif result is EXCEPTION:
