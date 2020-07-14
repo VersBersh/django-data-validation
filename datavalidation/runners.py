@@ -10,14 +10,17 @@ from .models import (
     ExceptionInfoMixin, FailingObject, Validator
 )
 from .registry import REGISTRY, ValidatorInfo
-from .results import (
-    PASS, FAIL, NA, EXCEPTION,
-    Result, ResultType, check_return_value,
-    Status, SummaryEx,
-)
+from .results import PASS, FAIL, NA, EXCEPTION, Result, Status, SummaryEx
+from .types import ResultType, check_return_value
 from .utils import queryset_iterator, chunk, partition
 
 from .logging import logger
+
+
+__all__ = [
+    "ModelValidationRunner",
+    "ObjectValidationRunner",
+]
 
 
 class ResultHandlerMixin:
@@ -407,6 +410,7 @@ class ObjectValidationRunner(ResultHandlerMixin):
                          result: Type[Result],
                          exinfo: Optional[dict]
                          ) -> None:
+        print("updating validator", valinfo.method_name, result)
         # running validation for one object may change the status of the
         # entire Validator (e.g. if this object was the only one failing)
         validator = Validator.objects.select_for_update().get(id=valinfo.get_validator_id())
@@ -422,6 +426,8 @@ class ObjectValidationRunner(ResultHandlerMixin):
 
         failures = validator.failing_objects.filter(is_valid=True, allowed_to_fail=False)
         new_status = Status.PASSING if failures.count() == 0 else Status.FAILING
+        print(new_status)
         if validator.status != new_status:
+            print("saving")
             validator.status = new_status
             validator.save()
