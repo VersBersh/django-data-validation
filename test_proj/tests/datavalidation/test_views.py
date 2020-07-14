@@ -7,7 +7,7 @@ from django.urls import reverse
 from animalconference.models import Animal
 
 from datavalidation.results import Status
-from datavalidation.runner import ModelValidationRunner
+from datavalidation.runners import ModelValidationRunner
 from datavalidation.viewsets import FailingObjectPagination
 
 

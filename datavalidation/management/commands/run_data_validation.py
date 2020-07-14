@@ -7,7 +7,7 @@ from termcolor import colored as coloured
 
 from datavalidation.registry import REGISTRY, ValidatorInfo
 from datavalidation.results import SummaryEx, Status
-from datavalidation.runner import ModelValidationRunner
+from datavalidation.runners import ModelValidationRunner
 from datavalidation.utils import sysexit, timer
 from datavalidation.logging import logger
 

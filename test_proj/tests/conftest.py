@@ -7,7 +7,7 @@ from animalconference.models import Animal, Seminar
 from datavalidation.logging import logger
 from datavalidation.registry import REGISTRY, ValidatorInfo
 from datavalidation.results import SummaryEx
-from datavalidation.runner import ModelValidationRunner
+from datavalidation.runners import ModelValidationRunner
 
 
 # noinspection PyUnusedLocal
@@ -15,9 +15,7 @@ from datavalidation.runner import ModelValidationRunner
 def django_db_setup(django_db_setup, django_db_blocker):
     """ add Validators to the test database """
     with django_db_blocker.unblock():
-        for modelinfo in REGISTRY.values():
-            for valinfo in modelinfo.validators.values():
-                valinfo.get_validator_id()  # creates the record if it doesn't exist
+        REGISTRY.sync_to_db()
 
 
 @pytest.fixture(scope="session")

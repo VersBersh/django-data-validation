@@ -4,7 +4,8 @@ from random import choice, randint
 
 from django.db import models
 
-from datavalidation import data_validator, PASS, FAIL, NA, ResultType
+from datavalidation import data_validator, PASS, FAIL, NA
+from datavalidation.types import ResultType
 
 
 class AnimalManager(models.Manager):
@@ -62,17 +63,12 @@ class AnimalManager(models.Manager):
             self.random_animal()
 
 
-class Animal(models.Model):
+class BaseAnimal(models.Model):
     species = models.CharField(max_length=50)
     name = models.CharField(max_length=50)
-    carnivorous = models.BooleanField()
-    predator_index = models.PositiveIntegerField()
-    prey = models.ManyToManyField("Animal", blank=True)
 
-    objects = AnimalManager()
-
-    def __str__(self):
-        return f"{self.name} the {self.species}"
+    class Meta:
+        abstract = True
 
     @data_validator
     def check_alliteration(self) -> ResultType:
@@ -81,6 +77,17 @@ class Animal(models.Model):
             return PASS
         else:
             return FAIL("not an alliteration")
+
+
+class Animal(BaseAnimal):
+    carnivorous = models.BooleanField()
+    predator_index = models.PositiveIntegerField()
+    prey = models.ManyToManyField("Animal", blank=True)
+
+    objects = AnimalManager()
+
+    def __str__(self):
+        return f"{self.name} the {self.species}"
 
     @data_validator(prefetch_related="prey")
     def check_carnivorous(self) -> ResultType:
@@ -107,3 +114,12 @@ class Animal(models.Model):
             return NA
         else:
             return self.prey.filter(predator_index__gte=self.predator_index).count() == 0
+
+
+class AnimalProxy(Animal):
+    class Meta:
+        proxy = True
+
+    @data_validator
+    def void(self):
+        return PASS

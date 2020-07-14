@@ -12,7 +12,7 @@ from django.http import HttpRequest, QueryDict
 from django.utils.safestring import mark_safe
 
 from datavalidation.models import FailingObject, Validator
-from datavalidation.runner import ObjectValidationRunner
+from datavalidation.runners import ObjectValidationRunner
 from datavalidation.utils import partition
 
 

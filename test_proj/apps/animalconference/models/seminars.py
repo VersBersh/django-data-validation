@@ -5,7 +5,8 @@ from random import choice, randint
 from django.db import models
 from django.db.models import F, QuerySet
 
-from datavalidation import data_validator, Summary, ResultType
+from datavalidation import data_validator, Summary
+from datavalidation.types import ResultType
 from .animals import Animal
 
 

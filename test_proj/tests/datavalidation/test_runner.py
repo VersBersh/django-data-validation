@@ -6,7 +6,7 @@ import pytest
 from animalconference.models import Animal
 from datavalidation.models import Validator
 from datavalidation.results import Status
-from datavalidation.runner import ModelValidationRunner, ObjectValidationRunner
+from datavalidation.runners import ModelValidationRunner, ObjectValidationRunner
 
 
 def test_model_runner_with_bad_model():

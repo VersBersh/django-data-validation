@@ -1,4 +1,4 @@
-from .results import PASS, FAIL, NA, Summary, ResultType
+from .results import PASS, FAIL, NA, Summary
 from .registry import data_validator
 
 __all__ = [
@@ -6,6 +6,5 @@ __all__ = [
     "FAIL",
     "NA",
     "Summary",
-    "ResultType",
     "data_validator",
 ]

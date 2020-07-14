@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 import enum
-from typing import List, Optional, Union, Any, NewType, Type, Generator, Tuple
+from typing import List, Optional, Union, Any, Generator
 
 from django.db import models
 from django.db.models import Model, QuerySet
@@ -53,33 +53,6 @@ class NA(Result):
 
 class EXCEPTION(Result):
     pass
-
-
-ResultType = NewType("ResultType", Union[bool, Result, Type[Result]])
-
-
-def check_return_value(return_value: ResultType,
-                       exception_info: Optional[dict] = None,
-                       object_pk: Optional[int] = None,
-                       ) -> Tuple[Type[Result], Optional[dict]]:
-    """ check that the user has returned a valid ResultType
-
-     :returns: the Status and exception info if there is any
-    """
-    if exception_info is not None:
-        return EXCEPTION, exception_info
-    elif return_value is PASS or isinstance(return_value, PASS) or return_value is True:
-        return PASS, None
-    elif return_value is FAIL or isinstance(return_value, FAIL) or return_value is False:
-        return FAIL, None
-    elif return_value is NA or isinstance(return_value, NA) or return_value is True:
-        return NA, None
-    else:
-        return EXCEPTION, {
-            "exc_type": "TypeError('data validators must return datavalidator.PASS, "
-                        "datavalidator.FAIL, datavalidator.NA, True, or False')",
-            "exc_obj_pk": object_pk,
-        }
 
 
 @dataclass
