@@ -15,9 +15,8 @@ function init() {
     fi
 
     # paths
-    SETUP_SCRIPT="$(realpath "${BASH_SOURCE[0]}")"
-    SETUP_DIR="$(dirname "$SETUP_SCRIPT")"
-    PROJ_ROOT="$(dirname "$SETUP_DIR")"
+    PROJ_ROOT="$(git rev-parse --show-toplevel)"
+    SETUP_DIR="$PROJ_ROOT/setup"
 
     # colours for pretty_print
     typeset -rg ta_none="$(tput sgr0 2> /dev/null || true)"
@@ -43,7 +42,7 @@ function link_precommit_hook() {
     local PRE_COMMIT_HOOK="$PROJ_ROOT/.git/hooks/pre-commit"
     if [[ ! -f "$PRE_COMMIT_HOOK" ]]; then
         ln -s "$SETUP_DIR/pre-commit" "$PRE_COMMIT_HOOK"
-        chmod +700 "$PRE_COMMIT_HOOK"  # commit-hooks must be executable
+        chmod +x "$PRE_COMMIT_HOOK"  # commit-hooks must be executable
     else
         pretty_print "pre-commit already exists" "$fg_yellow"
     fi

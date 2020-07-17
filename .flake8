@@ -2,8 +2,9 @@
 max-line-length = 95
 exclude =
     .git,
-    .pycache
-    .pytest_cache
+    __pychache__,
+    .pycache,
+    .pytest_cache,
 	migrations,
 	datavalidation/admin,
 	test_proj/htmlcov,

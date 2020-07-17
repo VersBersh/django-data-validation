@@ -4,7 +4,7 @@
 function init() {
     # make sure this is run from the root dir
     GIT_ROOT="$(git rev-parse --show-toplevel)"
-    cd $GIT_ROOT
+    cd "$GIT_ROOT" || exit 1
 
     # colours for pretty_print
     typeset -rg ta_none="$(tput sgr0 2> /dev/null || true)"
