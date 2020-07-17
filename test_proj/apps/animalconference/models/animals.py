@@ -7,6 +7,8 @@ from django.db import models
 from datavalidation import data_validator, PASS, FAIL, NA
 from datavalidation.types import ResultType
 
+from .habitat import Habitat
+
 
 class AnimalManager(models.Manager):
     def __init__(self):
@@ -22,12 +24,15 @@ class AnimalManager(models.Manager):
                     continue
                 self.names[name[0]].append(name)
 
+        self.habitat_ids = Habitat.objects.all().values_list("id", flat=True)
+
     def random_animal(self) -> "Animal":
         """ return a random Animal instance for testing """
         species = choice(self.species)
         name = choice(self.names[species[0]])
         carnivorous = choice([True, False])
         predator_index = 1 if not carnivorous else randint(2, 10)
+        habitat_id = choice(self.habitat_ids)
         if carnivorous:
             prey = Animal.objects.filter(predator_index=predator_index-1)[:2]
             if len(prey) == 0:
@@ -39,7 +44,8 @@ class AnimalManager(models.Manager):
             species=species,
             name=name,
             carnivorous=carnivorous,
-            predator_index=predator_index
+            predator_index=predator_index,
+            habitat_id=habitat_id,
         )
         animal.prey.set(prey)
         return animal
@@ -83,6 +89,7 @@ class Animal(BaseAnimal):
     carnivorous = models.BooleanField()
     predator_index = models.PositiveIntegerField()
     prey = models.ManyToManyField("Animal", blank=True)
+    habitat = models.ForeignKey(Habitat, on_delete=models.CASCADE)
 
     objects = AnimalManager()
 
@@ -97,7 +104,7 @@ class Animal(BaseAnimal):
         else:
             return self.prey.count() == 0
 
-    @data_validator
+    @data_validator(select_related="foobar", prefetch_related="foobaz")
     def check_no_cannibals(self) -> ResultType:
         """ check no animals are cannibalistic """
         if self.species == "Mantis":

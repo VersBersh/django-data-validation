@@ -96,13 +96,12 @@ class Seminar(models.Model):
         summary = Summary()
         for seminar in cls.objects.prefetch_related("attendees"):
             if seminar.attendees.count() > cls.MAX_ATTENDEES:
-                summary.num_failing += 1
                 summary.failures.append(seminar)
             else:
                 summary.num_passing += 1
         return summary
 
-    @data_validator
+    @data_validator(prefetch_related="host__prey")
     def check_instancemethod_hits_an_exception(self) -> ResultType:
         """ testing the user's code hitting an exception in an instance
             method

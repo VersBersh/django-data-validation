@@ -2,7 +2,7 @@ from datetime import datetime, timedelta as td
 
 from django.core.management.base import BaseCommand
 
-from animalconference.models import Animal, Seminar
+from animalconference.models import Animal, Seminar, Habitat
 
 
 class Command(BaseCommand):
@@ -12,6 +12,7 @@ class Command(BaseCommand):
         """ create some testing data """
         print("adding some testing data...")
         # these functions create valid data
+        Habitat.objects.populate_database()
         Animal.objects.populate_database(100)
         Seminar.objects.populate_database(10)
 

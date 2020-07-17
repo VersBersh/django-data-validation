@@ -3,7 +3,7 @@ from typing import Type
 from django.db import models
 import pytest
 
-from animalconference.models import Animal, Seminar
+from animalconference.models import Animal, Seminar, Habitat
 from datavalidation.logging import logger
 from datavalidation.registry import REGISTRY, ValidatorInfo
 from datavalidation.results import SummaryEx
@@ -19,9 +19,15 @@ def django_db_setup(django_db_setup, django_db_blocker):
 
 
 @pytest.fixture(scope="session")
-def valid_animals(django_db_blocker):
+def valid_habitats(django_db_blocker):
+    """ add all (6) habitats to the database """
+    with django_db_blocker.unblock():
+        Habitat.objects.populate_database()
+
+
+@pytest.fixture(scope="session")
+def valid_animals(django_db_blocker, valid_habitats):
     """ add 100 valid Animals to the test database """
-    # setup
     with django_db_blocker.unblock():
         count = Animal.objects.count()
         if count == 0:
