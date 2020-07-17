@@ -1,9 +1,9 @@
 from datetime import datetime
-import itertools
 from typing import (
-    Dict, Generator, Iterator, List, Optional, Tuple, Type
+    Dict, Generator, Iterator, List, Optional, Tuple, Type, Set
 )
 
+from django.core.exceptions import ObjectDoesNotExist, FieldError
 from django.db import models, transaction
 from tqdm import tqdm
 
@@ -123,6 +123,7 @@ class InstanceMethodRunner(ResultHandlerMixin):
                  validator_infos: List[ValidatorInfo]):
         super().__init__()
         self.model = model
+        self.model_info = REGISTRY[model]
         self.validator_infos = validator_infos
         assert all(not v.is_class_method for v in self.validator_infos)
         self._summaries = {info: SummaryEx() for info in self.validator_infos}
@@ -218,17 +219,54 @@ class InstanceMethodRunner(ResultHandlerMixin):
             summary.num_na += 1
         return exinfo
 
+    def get_related_lookups(self) -> Tuple[Set[str], Set[str]]:
+        """ check that the select_related and prefetch_related fields are
+            valid and display a warning if they are not
+
+         :returns: the union of valid select related and prefetch related
+            fields accross all validators on the model
+        """
+        qs = self.model._meta.default_manager.all()
+
+        try:
+            obj = qs.first()
+        except ObjectDoesNotExist:
+            return set(), set()
+
+        select_related = set()
+        for valinfo in self.validator_infos:
+            not_seen = valinfo.select_related - select_related
+            if len(not_seen) != 0:
+                try:
+                    qs.select_related(*not_seen).first()
+                    select_related |= not_seen
+                except FieldError as e:
+                    logger.cwarning(
+                        f"{e.args[0]}. select_related fields will be skipped for"
+                        f" {self.model_info.model_name}.{valinfo.method_name}"
+                    )
+
+        prefetch_related = set()
+        for valinfo in self.validator_infos:
+            not_seen = valinfo.prefetch_related - prefetch_related
+            if len(not_seen) != 0:
+                try:
+                    models.prefetch_related_objects([obj], *valinfo.prefetch_related)
+                    prefetch_related |= not_seen
+                except (AttributeError, ValueError) as e:
+                    logger.cwarning(
+                        f"{e.args[0]}. prefetch_realted will be skipped for "
+                        f"{self.model_info.model_name}.{valinfo.method_name}"
+                    )
+
+        return select_related, prefetch_related
+
     def iterate_model_objects(self, chunk_size: int = 2000) -> Generator[models.Model, None, None]:  # noqa E501
         """ iterate the objects of a model with select/prefetch related """
-        select_related_lookups = set(itertools.chain(*[
-            info.select_related for info in self.validator_infos
-        ]))
-        prefetch_related_lookups = set(itertools.chain(*[
-            info.prefetch_related for info in self.validator_infos
-        ]))
+        select_related, prefetch_related = self.get_related_lookups()
         queryset = self.model._meta.default_manager \
-                       .select_related(*select_related_lookups) \
-                       .prefetch_related(*prefetch_related_lookups)
+                       .select_related(*select_related) \
+                       .prefetch_related(*prefetch_related)
         yield from queryset_iterator(queryset, chunk_size)
 
 

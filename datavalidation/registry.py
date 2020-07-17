@@ -1,7 +1,7 @@
 import inspect
 from functools import lru_cache
 from typing import (
-    Callable, Dict, Optional, Sequence, Tuple, Type, Union,
+    Callable, Dict, Optional, Sequence, Type, Union, Set,
 )
 
 from dataclasses import dataclass, field
@@ -15,8 +15,8 @@ from .utils import is_class_method
 @dataclass
 class DecoratorArgs:
     """ arguments passed to the data_validator decorator """
-    select_related: Tuple[str] = field(default_factory=tuple)
-    prefetch_related: Tuple[str] = field(default_factory=tuple)
+    select_related: Set[str] = field(default_factory=tuple)
+    prefetch_related: Set[str] = field(default_factory=tuple)
 
 
 @dataclass
@@ -27,8 +27,8 @@ class ValidatorInfo:
     method_name: str
     description: str
     is_class_method: bool
-    select_related: tuple
-    prefetch_related: tuple
+    select_related: set
+    prefetch_related: set
 
     def __str__(self):
         mi = self.model_info
@@ -128,16 +128,16 @@ def _data_validator(select_related: Union[Sequence, str, None] = None,
     if select_related is None:
         select_related = set()
     elif isinstance(select_related, str):
-        select_related = (select_related,)
+        select_related = {select_related}
     else:
-        select_related = tuple(select_related)
+        select_related = set(select_related)
 
     if prefetch_related is None:
         prefetch_related = set()
     elif isinstance(prefetch_related, str):
-        prefetch_related = (prefetch_related,)
+        prefetch_related = {prefetch_related}
     else:
-        prefetch_related = tuple(prefetch_related)
+        prefetch_related = set(prefetch_related)
 
     def decorator(method: ValidatorType) -> ValidatorType:
         qualname = getattr(method, "__qualname__", "")
