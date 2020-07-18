@@ -8,9 +8,16 @@
 DJANGO-DATA-VALIDATION
 ++++++++++++++++++++++
 
-** :warning: this app is still in pre-alpha. expect breaking changes **
+.. image:: https://readthedocs.org/projects/django-data-validation/badge/?version=latest
+   :target: https://django-data-validation.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+
+
+** :warning: this app is still in alpha. expect breaking changes :warning: **
 
 A Django app to manage the validation of your data. Inspired by `django-data-tests <https://github.com/andrewbird2/django-data-tests>`_
+
+read the documentation: `<https://django-data-validation.readthedocs.io/en/latest/?>`_
 
 write tests on your Django models and view the summary in the admin
 
