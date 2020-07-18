@@ -13,7 +13,7 @@ with (Path(__file__).parent / "README.rst").open("r") as f:
 
 setup(
     name="django-data-validation",
-    version="0.0.1",
+    version="0.0.1-alpha",
     description=DESCRIPTION,
     long_description=DESCRIPTION,
     long_description_content_type="text/markdown",

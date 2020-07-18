@@ -1,0 +1,20 @@
+@import "p_sphinx_theme.css";
+
+
+div.highlight pre,
+div.highlight-python pre,
+div.highlight-python3 pre {
+    font-family: Consolas, Roboto, sans-serif;
+    font-size: 100%;
+}
+
+code {
+    font-family: Consolas, Roboto, sans-serif !important;
+    font-size: 100% !important;
+}
+
+
+div.section > h2,
+div.section > h3 {
+    font-style: normal;
+}

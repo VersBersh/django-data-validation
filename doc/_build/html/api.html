@@ -1,0 +1,313 @@
+
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Reference &#8212; Django Data Validation 0.0.1-alpha documentation</title>
+    <link rel="stylesheet" href="_static/ddv.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/local_fonts.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/jquery.cookie.js"></script>
+    <script src="_static/p_sphinx_theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Celery Integration" href="celery.html" />
+    <link rel="prev" title="Setting up the Admin" href="admin.html" /> 
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head><body>
+      <div class="relbar-top">
+            
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="celery.html" title="Celery Integration"
+             accesskey="N">next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="admin.html" title="Setting up the Admin"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+      <li><a href="index.html">Django Data Validation 0.0.1-alpha documentation</a> &#187;</li>
+
+        <li class="nav-item nav-item-this"><a href="">API Reference</a></li> 
+      </ul>
+    </div>
+      </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="api-reference">
+<span id="adpi"></span><h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="management-commands">
+<h2>management commands<a class="headerlink" href="#management-commands" title="Permalink to this headline">¶</a></h2>
+<p><strong>run_data_validation</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./manage.py run_data_validation <span class="o">[</span>--models &lt;MODEL_LIST&gt;<span class="o">]</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">--models</span></code> accepts a space seperated list of models of the form <code class="docutils literal notranslate"><span class="pre">&lt;app_label&gt;.&lt;model_name&gt;</span></code>. If the models flag is not provided then all models are validated.</p>
+</div>
+<div class="section" id="module-data_validation">
+<span id="data-validation"></span><h2>data_validation<a class="headerlink" href="#module-data_validation" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="data_validation.data_validator">
+<code class="sig-prename descclassname">data_validation.</code><code class="sig-name descname">data_validator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">select_related</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">prefetch_related</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_validation.data_validator" title="Permalink to this definition">¶</a></dt>
+<dd><p>A decorator that identifies a method on a django model as a data validator. The decorated method may be a regular (instance) method or a <cite>&#64;classmethod</cite> on a django model. It must take only one parameter (<cite>self</cite> or <cite>cls</cite>) and return a validation result. See <a class="reference internal" href="data_validators.html#data-validators"><span class="std std-ref">Writing Data Valiators</span></a> for examples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>select_related</strong> (<em>Union</em><em>[</em><em>None</em><em>,</em><em>str</em><em>,</em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – arguments to be passed to QuerySet.select_related</p></li>
+<li><p><strong>prefetch_related</strong> (<em>Union</em><em>[</em><em>None</em><em>,</em><em>str</em><em>,</em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – arguments to be passed to QuerySet.prefetch_related</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a function</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt id="data_validation.NA">
+<em class="property">class </em><code class="sig-prename descclassname">data_validation.</code><code class="sig-name descname">NA</code><a class="headerlink" href="#data_validation.NA" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="data_validation.PASS">
+<em class="property">class </em><code class="sig-prename descclassname">data_validation.</code><code class="sig-name descname">PASS</code><a class="headerlink" href="#data_validation.PASS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="data_validation.FAIL">
+<em class="property">class </em><code class="sig-prename descclassname">data_validation.</code><code class="sig-name descname">FAIL</code><a class="headerlink" href="#data_validation.FAIL" title="Permalink to this definition">¶</a></dt>
+<dd><p>values to be returned from data validators to signify Not Applicable, Passing, or Failing respectively.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>comment</strong> (<em>str</em>) – (FAIL only) an optional comment to return. You can also pass comments to <code class="docutils literal notranslate"><span class="pre">PASS</span></code> and <code class="docutils literal notranslate"><span class="pre">NA</span></code> but such objects are not stored to the database so the comment is discarded.</p></li>
+<li><p><strong>allowed_to_fail</strong> (<em>bool</em>) – (FAIL only) if an object fails validation but it is allowed or expected to fail then you can pass <code class="docutils literal notranslate"><span class="pre">FAIL(allowed_to_fail=True)</span></code>. A validator will not be considered to have failed if any objects that fail are marked allowed_to_fail.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt id="data_validation.Summary">
+<em class="property">class </em><code class="sig-prename descclassname">data_validation.</code><code class="sig-name descname">Summary</code><a class="headerlink" href="#data_validation.Summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>A possible return value for a class method validator</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_na</strong> (<em>int</em>) – the number of objects for which validation is not applicable</p></li>
+<li><p><strong>num_passing</strong> (<em>int</em>) – the number of objects that pass validation</p></li>
+<li><p><strong>failures</strong> (<em>Union</em><em>[</em><em>QuerySet</em><em>,</em><em>List</em><em>[</em><em>models.Model</em><em>]</em><em>,</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – a QuerySet, list of objects or their ids that fail validation. See <a class="reference internal" href="data_validators.html#data-validators"><span class="std std-ref">Writing Data Valiators</span></a> for examples.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="c enum">
+<dt id="c.Status">
+<em class="property">enum </em><code class="sig-name descname">Status</code><a class="headerlink" href="#c.Status" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>An Enum representing the validation status of a validator, model, or app</p>
+<dl class="c enumerator">
+<dt id="c.Status.UNINITIALIZED">
+<em class="property">enumerator </em><code class="sig-name descname">UNINITIALIZED</code><a class="headerlink" href="#c.Status.UNINITIALIZED" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="c.Status.PASSING">
+<em class="property">enumerator </em><code class="sig-name descname">PASSING</code><a class="headerlink" href="#c.Status.PASSING" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="c.Status.FAILING">
+<em class="property">enumerator </em><code class="sig-name descname">FAILING</code><a class="headerlink" href="#c.Status.FAILING" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="c.Status.EXCEPTION">
+<em class="property">enumerator </em><code class="sig-name descname">EXCEPTION</code><a class="headerlink" href="#c.Status.EXCEPTION" title="Permalink to this definition">¶</a><br /></dt>
+<dt id="c.Status.WARNING">
+<em class="property">enumerator </em><code class="sig-name descname">WARNING</code><a class="headerlink" href="#c.Status.WARNING" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-data_validation.runners">
+<span id="data-validation-runners"></span><h2>data_validation.runners<a class="headerlink" href="#module-data_validation.runners" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="data_validation.runners.ModelValidationRunner">
+<em class="property">class </em><code class="sig-prename descclassname">data_validation.runners.</code><code class="sig-name descname">ModelValidationRunner</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="optional">[</span>, <em class="sig-param">method_names=None</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#data_validation.runners.ModelValidationRunner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run all or a subset of data_validators for the given model</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>Type</em><em>[</em><em>django.db.models.Model</em><em>]</em>) – the model to validate</p></li>
+<li><p><strong>method_names</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – the names of the data_validators to run. If None it will run all validators on the model</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="data_validation.runners.ModelValidationRunner.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><span class="optional">[</span><em class="sig-param">show_progress=False</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#data_validation.runners.ModelValidationRunner.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>start the validation runner</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>show_progress</strong> (<em>bool</em>) – if True a progress bar will be displayed.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="data_validation.runners.ObjectValidationRunner">
+<em class="property">class </em><code class="sig-prename descclassname">data_validation.runners.</code><code class="sig-name descname">ObjectValidationRunner</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_validation.runners.ObjectValidationRunner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run all <cite>instance methods</cite> data_validators for a given object. (see <a class="reference internal" href="data_validators.html#data-validators"><span class="std std-ref">Writing Data Valiators</span></a> for the destinction on instance and class method validators)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>obj</strong> (<em>django.db.models.Model</em>) – the object to validate</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="data_validation.runners.ObjectValidationRunner.run">
+<code class="sig-name descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#data_validation.runners.ObjectValidationRunner.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>start the validation runner</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-data_validation.models">
+<span id="data-validation-models"></span><h2>data_validation.models<a class="headerlink" href="#module-data_validation.models" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="data_validation.models.DataValidaitonMixin">
+<em class="property">class </em><code class="sig-prename descclassname">data_validation.models.</code><code class="sig-name descname">DataValidaitonMixin</code><a class="headerlink" href="#data_validation.models.DataValidaitonMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides methods to a django model to query the objects that fail data validation</p>
+<dl class="py method">
+<dt id="data_validation.models.DataValidaitonMixin.datavalidaiton_results">
+<em class="property">property </em><code class="sig-name descname">datavalidaiton_results</code><a class="headerlink" href="#data_validation.models.DataValidaitonMixin.datavalidaiton_results" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the QuerySet objects that failed data validation. The QuerySet model is of type data_validation.models.FailingObject</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="data_validation.models.DataValidaitonMixin.datavalidation_passing">
+<em class="property">property </em><code class="sig-name descname">datavalidation_passing</code><a class="headerlink" href="#data_validation.models.DataValidaitonMixin.datavalidation_passing" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>True if no objects fail validation (except those marked <cite>allowed to fail</cite>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="data_validation.models.DataValidaitonMixin.datavalidation_status">
+<em class="property">classmethod </em><code class="sig-name descname">datavalidation_status</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#data_validation.models.DataValidaitonMixin.datavalidation_status" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the <code class="docutils literal notranslate"><span class="pre">data_validaiton.results.Status</span></code> of the model</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-data_validation.admin">
+<span id="data-validation-admin"></span><h2>data_validation.admin<a class="headerlink" href="#module-data_validation.admin" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="data_validation.admin.DataValidationMixin">
+<em class="property">class </em><code class="sig-prename descclassname">data_validation.admin.</code><code class="sig-name descname">DataValidationMixin</code><a class="headerlink" href="#data_validation.admin.DataValidationMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds validation results to the django admin</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="sphinxlocaltoc">
+    <h3><a href="index.html">Page contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">API Reference</a><ul>
+<li><a class="reference internal" href="#management-commands">management commands</a></li>
+<li><a class="reference internal" href="#module-data_validation">data_validation</a></li>
+<li><a class="reference internal" href="#module-data_validation.runners">data_validation.runners</a></li>
+<li><a class="reference internal" href="#module-data_validation.models">data_validation.models</a></li>
+<li><a class="reference internal" href="#module-data_validation.admin">data_validation.admin</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/api.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+      <div class="relbar-bottom">
+            
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="celery.html" title="Celery Integration"
+             >next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="admin.html" title="Setting up the Admin"
+             >previous</a> &nbsp; &nbsp;</li>
+      <li><a href="index.html">Django Data Validation 0.0.1-alpha documentation</a> &#187;</li>
+
+        <li class="nav-item nav-item-this"><a href="">API Reference</a></li> 
+      </ul>
+    </div>
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Oliver Chambers.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.1.2.
+    </div>
+      <!-- PSphinxTheme -->
+  </body>
+</html>

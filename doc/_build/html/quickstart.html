@@ -1,0 +1,213 @@
+
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Start &#8212; Django Data Validation 0.0.1-alpha documentation</title>
+    <link rel="stylesheet" href="_static/ddv.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/local_fonts.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/jquery.cookie.js"></script>
+    <script src="_static/p_sphinx_theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Writing Data Valiators" href="data_validators.html" />
+    <link rel="prev" title="Django Data Validation" href="index.html" /> 
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head><body>
+      <div class="relbar-top">
+            
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="data_validators.html" title="Writing Data Valiators"
+             accesskey="N">next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="index.html" title="Django Data Validation"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+      <li><a href="index.html">Django Data Validation 0.0.1-alpha documentation</a> &#187;</li>
+
+        <li class="nav-item nav-item-this"><a href="">Quick Start</a></li> 
+      </ul>
+    </div>
+      </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="quick-start">
+<span id="quickstart"></span><h1>Quick Start<a class="headerlink" href="#quick-start" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>python &gt;= 3.6</p></li>
+<li><p>django &gt;= 2.2</p></li>
+<li><p>djangorestframework (tested against 3.11)</p></li>
+</ul>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>clone the repo</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/VersBersh/django-data-validation.git
+</pre></div>
+</div>
+<p>change to the django-data-validation directory and install with pip</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install .
+</pre></div>
+</div>
+<p>In your project, add <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">rest_framework</span></span></code> and <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">datavalidation</span></span></code> to <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">INSTALLED_APPS</span></span></code></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">INSTALLED_APPS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;rest_framework&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;datavalidation.apps.DataValidationConfig&quot;</span><span class="p">,</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>from your project directory run the database migrations</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./manage.py migrate datavalidation
+</pre></div>
+</div>
+<p>When running the django-admin server the static files for the datavalidation admin will be served automatically (assuming <code class="code py python docutils literal notranslate"><span class="literal string double"><span class="pre">“django.contrib.staticfiles”</span></span></code> is in <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">INSTALLED_APPS</span></span></code>). Otheriwse, you should also run</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./manage.py collectstatic
+</pre></div>
+</div>
+</div>
+<div class="section" id="basic-usage">
+<h2>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h2>
+<p>On any django model that has data that you would like to validate, add a method decorated with <code class="code py python docutils literal notranslate"><span class="name decorator"><span class="pre">&#64;data_validator</span></span></code> that returns <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">PASS</span></span></code>, <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">FAIL</span></span></code> or <code class="code py python docutils literal notranslate"><span class="name"><span class="pre">NA</span></span></code>. For instance if you have a model with a start and end time, you can add a data_validator to check that the start time is always before the end time</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">datavalidation</span> <span class="kn">import</span> <span class="n">data_validator</span><span class="p">,</span> <span class="n">PASS</span><span class="p">,</span> <span class="n">FAIL</span><span class="p">,</span> <span class="n">NA</span>
+
+<span class="k">class</span> <span class="nc">YourModel</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">()</span>
+    <span class="n">end_time</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="o">...</span>
+
+    <span class="nd">@data_validator</span>
+    <span class="k">def</span> <span class="nf">check_start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; check that the start time is before end time &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">NA</span><span class="p">(</span><span class="s2">&quot;end time not set&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_time</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">PASS</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">FAIL</span><span class="p">(</span><span class="s2">&quot;end time is before start time!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To run the validation for all models</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./manage.py run_data_validation
+</pre></div>
+</div>
+<p>or for a specific model</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./manage.py run_data_validation --models &lt;app_label&gt;.&lt;model_name&gt;
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="data_validators.html#data-validators"><span class="std std-ref">Writing Data Valiators</span></a> for more details and examples of data validators</p>
+<p>Optionally, you can add the <code class="docutils literal notranslate"><span class="pre">data_validaiton.models.DataValidationMixin</span></code> to your models to provide some additional methods for querying the validation results</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">data_validation.models</span> <span class="kn">import</span> <span class="n">DataValidationMixin</span>
+
+<span class="k">class</span> <span class="nc">YouModel</span><span class="p">(</span><span class="n">DataValidationMixin</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="o">...</span>
+
+<span class="c1"># in a shell</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">YouModel</span><span class="o">.</span><span class="n">datavalidation_status</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">Status</span><span class="o">.</span><span class="n">PASSING</span>  <span class="c1"># hopefully :)</span>
+</pre></div>
+</div>
+<p>Finally, you can also add <code class="docutils literal notranslate"><span class="pre">data_validaiton.admin.DataValidationMixin</span></code> to your django admin classes to review the data in the admin. See <a class="reference internal" href="admin.html#admin"><span class="std std-ref">Setting up the Admin</span></a> for details.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="sphinxlocaltoc">
+    <h3><a href="index.html">Page contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Quick Start</a><ul>
+<li><a class="reference internal" href="#requirements">Requirements</a></li>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#basic-usage">Basic Usage</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/quickstart.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+      <div class="relbar-bottom">
+            
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="data_validators.html" title="Writing Data Valiators"
+             >next</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="index.html" title="Django Data Validation"
+             >previous</a> &nbsp; &nbsp;</li>
+      <li><a href="index.html">Django Data Validation 0.0.1-alpha documentation</a> &#187;</li>
+
+        <li class="nav-item nav-item-this"><a href="">Quick Start</a></li> 
+      </ul>
+    </div>
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Oliver Chambers.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.1.2.
+    </div>
+      <!-- PSphinxTheme -->
+  </body>
+</html>
