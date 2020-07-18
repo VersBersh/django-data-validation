@@ -2,7 +2,6 @@ from typing import List, TYPE_CHECKING, Optional
 
 from django.contrib import admin
 from django.contrib.admin.helpers import InlineAdminFormSet
-from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.contrib.contenttypes.forms import BaseGenericInlineFormSet
 from django.core.checks import messages

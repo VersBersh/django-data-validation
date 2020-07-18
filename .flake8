@@ -6,6 +6,7 @@ exclude =
     .pycache,
     .pytest_cache,
 	migrations,
-	datavalidation/admin,
+	datavalidation/react,
+	datavalidation/node_modules,
 	test_proj/htmlcov,
 	test_proj/_debug.py
