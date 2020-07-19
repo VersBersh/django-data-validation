@@ -62,8 +62,10 @@ def timer(output: Callable):
             # quick and dirty, don't need precision timing
             start_time = time.time()
             ret = func(*args, **kwargs)
-            duration = time.time() - start_time
-            output(f"Total Execution Time: {duration/1000:.1}s")
+            seconds = time.time() - start_time
+            hours, h = divmod(seconds, 60*60)
+            minutes, seconds = divmod(h, 60)
+            output(f"Total Execution Time: {hours}h:{minutes}m:{seconds}s")
             return ret
         return inner
     return wrapper
