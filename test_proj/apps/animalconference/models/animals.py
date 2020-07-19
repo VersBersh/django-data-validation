@@ -127,6 +127,9 @@ class AnimalProxy(Animal):
     class Meta:
         proxy = True
 
+    class DataValidationConfig:
+        exclude = True
+
     @data_validator
     def void(self):
         return PASS

@@ -1,4 +1,4 @@
-.. _adpi:
+.. _api:
 
 API Reference
 =============
@@ -93,6 +93,7 @@ data_validation.runners
       start the validation runner
 
 
+.. _module-data_validation.models:
 
 data_validation.models
 ----------------------
@@ -118,7 +119,6 @@ data_validation.models
 
         :returns: the ``data_validaiton.results.Status`` of the model
 
-
 data_validation.admin
 ---------------------
 
@@ -126,4 +126,4 @@ data_validation.admin
 
 .. class:: DataValidationMixin
 
-    Adds validation results to the django admin
+    Adds validation results to the django admin. See :ref:`admin` for details.

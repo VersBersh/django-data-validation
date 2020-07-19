@@ -7,7 +7,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Setting up the Admin &#8212; Django Data Validation 0.0.1-alpha documentation</title>
+    <title>Setting up Models &#8212; Django Data Validation 0.0.1-alpha documentation</title>
     <link rel="stylesheet" href="_static/ddv.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="_static/local_fonts.css" type="text/css" />
@@ -20,8 +20,8 @@
     <script src="_static/p_sphinx_theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="API Reference" href="api.html" />
-    <link rel="prev" title="Setting up Models" href="configuring_models.html" /> 
+    <link rel="next" title="Setting up the Admin" href="admin.html" />
+    <link rel="prev" title="Writing Data Valiators" href="data_validators.html" /> 
             <meta name="viewport" content="width=device-width, initial-scale=1">
   </head><body>
       <div class="relbar-top">
@@ -36,14 +36,14 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="api.html" title="API Reference"
+          <a href="admin.html" title="Setting up the Admin"
              accesskey="N">next</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="configuring_models.html" title="Setting up Models"
+          <a href="data_validators.html" title="Writing Data Valiators"
              accesskey="P">previous</a> &nbsp; &nbsp;</li>
       <li><a href="index.html">Django Data Validation 0.0.1-alpha documentation</a> &#187;</li>
 
-        <li class="nav-item nav-item-this"><a href="">Setting up the Admin</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Setting up Models</a></li> 
       </ul>
     </div>
       </div>
@@ -54,36 +54,40 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="setting-up-the-admin">
-<span id="admin"></span><h1>Setting up the Admin<a class="headerlink" href="#setting-up-the-admin" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="data-validation-summary">
-<h2>Data Validation Summary<a class="headerlink" href="#data-validation-summary" title="Permalink to this headline">¶</a></h2>
-<p>Once you have run <code class="docutils literal notranslate"><span class="pre">./manage.py</span> <span class="pre">run_data_validation</span></code> the results can be viewed in the django admin. The only set up required is to run</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./manage.py collectstatic
-</pre></div>
-</div>
-<p>To copy static assets to your <cite>$STATIC_ROOT</cite> directory</p>
-</div>
-<div class="section" id="admin-mixin">
-<h2>Admin Mixin<a class="headerlink" href="#admin-mixin" title="Permalink to this headline">¶</a></h2>
-<p>If you want your objects validated when they are saved in the django-admin form then you can add the <code class="docutils literal notranslate"><span class="pre">data_validation.admin.DataValidationMixin</span></code> to your ModelAdmins. You must remember to add the mixin before <code class="docutils literal notranslate"><span class="pre">admin.ModelAdmin</span></code>. For instance</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">data_validation.admin</span> <span class="kn">import</span> <span class="n">DataValidationMixin</span>
-<span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+  <div class="section" id="setting-up-models">
+<span id="configuring-models"></span><h1>Setting up Models<a class="headerlink" href="#setting-up-models" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="model-mixin">
+<h2>Model Mixin<a class="headerlink" href="#model-mixin" title="Permalink to this headline">¶</a></h2>
+<p>You can optionally add <code class="docutils literal notranslate"><span class="pre">data_validation.models.DataValidationMixin</span></code> to your model to provide some extra properties for querying validation results</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">data_validation.models</span> <span class="kn">import</span> <span class="n">DataValidationMixin</span>
 
-<span class="nd">@admin</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">YourModel</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">YouModelAdmin</span><span class="p">(</span><span class="n">DataValidationMixin</span><span class="p">,</span> <span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">MyModel</span><span class="p">(</span><span class="n">DataValidationMixin</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="k">pass</span>
 </pre></div>
 </div>
-<p>If you are using a custom admin template (i.e. you set the property <code class="docutils literal notranslate"><span class="pre">change_form_template</span></code> or <code class="docutils literal notranslate"><span class="pre">add_form_template</span></code> on your model admin) you must add the following line to your template to render the validation result inlines.</p>
-<div class="highlight-jinja notranslate"><div class="highlight"><pre><span></span><span class="x">&lt;form&gt;</span>
-<span class="x">...</span>
-<span class="c">{# this line must be between the &lt;form&gt; tags (ideally near the top) #}</span><span class="x"></span>
-<span class="cp">{%</span> <span class="k">include</span> <span class="s2">&quot;datavalidation/admin_mixin/datavalidation_inline.html&quot;</span> <span class="cp">%}</span><span class="x"></span>
-
-<span class="x">&lt;/form&gt;</span>
+<p>See <a class="reference internal" href="api.html#module-data-validation-models"><span class="std std-ref">data_validation.models</span></a> for a full list of provided properties</p>
+</div>
+<div class="section" id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
+<p>If you want more control over how each model is validated you can add a class to your model called <code class="docutils literal notranslate"><span class="pre">DataValidationConfig</span></code> (similar to <code class="docutils literal notranslate"><span class="pre">Meta</span></code>)</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyModel</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">DataValidationConfig</span><span class="p">:</span>
+        <span class="n">exclude</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="o">...</span>
 </pre></div>
 </div>
+<p>Below is the full list of available options</p>
+<dl class="py class">
+<dt id="DataValidationConfig">
+<em class="property">class </em><code class="sig-name descname">DataValidationConfig</code><a class="headerlink" href="#DataValidationConfig" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py attribute">
+<dt id="DataValidationConfig.exclude">
+<code class="sig-name descname">exclude</code><em class="property">: bool</em><a class="headerlink" href="#DataValidationConfig.exclude" title="Permalink to this definition">¶</a></dt>
+<dd><p>if True, the model will be excluded from data validation. You might want this if the model is a non-abstract base model in an inheritance hierarchy.</p>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 </div>
 
@@ -100,8 +104,8 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
 <li class="toctree-l1"><a class="reference internal" href="data_validators.html">Writing Data Valiators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="configuring_models.html">Setting up Models</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Setting up the Admin</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Setting up Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin.html">Setting up the Admin</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="celery.html">Celery Integration</a></li>
 </ul>
@@ -111,7 +115,7 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/admin.rst.txt"
+      <li><a href="_sources/configuring_models.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -141,14 +145,14 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="api.html" title="API Reference"
+          <a href="admin.html" title="Setting up the Admin"
              >next</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="configuring_models.html" title="Setting up Models"
+          <a href="data_validators.html" title="Writing Data Valiators"
              >previous</a> &nbsp; &nbsp;</li>
       <li><a href="index.html">Django Data Validation 0.0.1-alpha documentation</a> &#187;</li>
 
-        <li class="nav-item nav-item-this"><a href="">Setting up the Admin</a></li> 
+        <li class="nav-item nav-item-this"><a href="">Setting up Models</a></li> 
       </ul>
     </div>
       </div>

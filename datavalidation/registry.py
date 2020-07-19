@@ -166,6 +166,10 @@ def update_registry():
         )
         if len(validators) == 0:
             continue
+        # skip models that define skip=True on their DataValidationConfig
+        opts = getattr(model, "DataValidationConfig", None)
+        if opts and getattr(opts, "exclude", False):
+            continue
         app_label = model._meta.app_label  # noqa
         model_name = model.__name__  # noqa
         REGISTRY[model] = model_info = ModelInfo(

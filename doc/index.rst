@@ -9,6 +9,7 @@ Django Data Validation
 
    quickstart
    data_validators
+   configuring_models
    admin
    api
    celery
