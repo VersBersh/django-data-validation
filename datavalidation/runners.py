@@ -253,7 +253,7 @@ class InstanceMethodRunner(ResultHandlerMixin):
                 try:
                     models.prefetch_related_objects([obj], *valinfo.prefetch_related)
                     prefetch_related |= not_seen
-                except (AttributeError, ValueError) as e:
+                except (FieldError, AttributeError, ValueError) as e:
                     logger.cwarning(
                         f"{e.args[0]}. prefetch_realted will be skipped for "
                         f"{self.model_info.model_name}.{valinfo.method_name}"
