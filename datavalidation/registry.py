@@ -7,6 +7,7 @@ from typing import (
 from dataclasses import dataclass, field
 from django.db import models
 
+from .config import get_config
 from .constants import MAX_DESCRIPTION_LEN
 from .types import ValidatorType
 from .utils import is_class_method
@@ -166,9 +167,8 @@ def update_registry():
         )
         if len(validators) == 0:
             continue
-        # skip models that define skip=True on their DataValidationConfig
-        opts = getattr(model, "DataValidationConfig", None)
-        if opts and getattr(opts, "exclude", False):
+        # skip models that define exclude=True on their Config
+        if get_config(model).exclude:
             continue
         app_label = model._meta.app_label  # noqa
         model_name = model.__name__  # noqa

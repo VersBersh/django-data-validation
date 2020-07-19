@@ -62,6 +62,59 @@ data_validation
       WARNING
 
 
+data_validation.admin
+---------------------
+
+.. module:: data_validation.admin
+
+.. class:: DataValidationMixin
+
+    Adds validation results to the django admin. See :ref:`admin` for details.
+
+
+.. _module-data_validation.config:
+
+data_validation.config
+----------------------
+
+.. class:: Config
+
+    Configuration options for data validation
+
+   .. attribute:: exclude
+      :type: bool
+
+      if True, the model will be excluded from data validation. You might want this if the model is a non-abstract base model in an inheritance hierarchy.
+
+
+
+.. _module-data_validation.models:
+
+data_validation.models
+----------------------
+
+.. module:: data_validation.models
+
+.. class:: DataValidaitonMixin
+
+    Provides methods to a django model to query the objects that fail data validation
+
+    .. method:: datavalidaiton_results
+       :property:
+
+       :returns: the QuerySet objects that failed data validation. The QuerySet model is of type data_validation.models.FailingObject
+
+    .. method:: datavalidation_passing
+       :property:
+
+       :returns: True if no objects fail validation (except those marked `allowed to fail`)
+
+    .. method:: datavalidation_status
+        :classmethod:
+
+        :returns: the ``data_validaiton.results.Status`` of the model
+
+
 data_validation.runners
 -----------------------
 
@@ -91,39 +144,3 @@ data_validation.runners
    .. method:: run()
 
       start the validation runner
-
-
-.. _module-data_validation.models:
-
-data_validation.models
-----------------------
-
-.. module:: data_validation.models
-
-.. class:: DataValidaitonMixin
-
-    Provides methods to a django model to query the objects that fail data validation
-
-    .. method:: datavalidaiton_results
-       :property:
-
-       :returns: the QuerySet objects that failed data validation. The QuerySet model is of type data_validation.models.FailingObject
-
-    .. method:: datavalidation_passing
-       :property:
-
-       :returns: True if no objects fail validation (except those marked `allowed to fail`)
-
-    .. method:: datavalidation_status
-        :classmethod:
-
-        :returns: the ``data_validaiton.results.Status`` of the model
-
-data_validation.admin
----------------------
-
-.. module:: data_validation.admin
-
-.. class:: DataValidationMixin
-
-    Adds validation results to the django admin. See :ref:`admin` for details.

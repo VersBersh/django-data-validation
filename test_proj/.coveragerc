@@ -1,7 +1,8 @@
 [run]
-source = apps/datavalidation
+source = datavalidation
 omit =
-    apps/datavalidation/migrations/*
-    apps/datavalidation/admin/*
-    apps/datavalidation/static/*
-    apps/datavalidation/templates/*
+    datavalidation/migrations/*
+    datavalidation/node_modules/*
+    datavalidation/react/*
+    datavalidation/static/*
+    datavalidation/templates/*
