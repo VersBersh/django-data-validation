@@ -11,6 +11,7 @@ from django.http import HttpRequest, QueryDict
 from django.utils.safestring import mark_safe
 
 from datavalidation.models import FailingObject, Validator
+from datavalidation.registry import RegistryKeyError
 from datavalidation.runners import ObjectValidationRunner
 from datavalidation.utils import partition
 
@@ -106,7 +107,12 @@ class DataValidationMixin(_Base):
         # marked allowed_to_fail. Instance-method validators will be
         # refreshed in ObjectValidationRunner
         Validator.refresh_statuses(classmethods_only=True)
-        result = ObjectValidationRunner(obj).run()
+        try:
+            result = ObjectValidationRunner(obj).run()
+        except RegistryKeyError:
+            # the model has no validators. Adding DataValidationMixin to
+            # the admin provides no benefit, but it shouldn't crash
+            result = True
         if not result:
             post: QueryDict = request.POST.copy()  # noqa
             post.pop("_save", None)
@@ -122,9 +128,9 @@ class DataValidationMixin(_Base):
         self.validate_object(request, obj)
         return super().response_change(request, obj)
 
-    def response_add(self, request: HttpRequest, obj: models.Model, **kwargs):
+    def response_add(self, request: HttpRequest, obj: models.Model, *args, **kwargs):
         self.validate_object(request, obj)
-        return super().response_add(request, obj, **kwargs)
+        return super().response_add(request, obj, *args, **kwargs)
 
     def get_inline_instances(self, request: HttpRequest, obj: Optional[models.Model] = None):
         # inject DataValidationInline here so that the ModelAdmin will do

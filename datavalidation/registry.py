@@ -74,11 +74,21 @@ class ModelInfo:
         return ContentType.objects.get_for_model(self.model).id
 
 
+class RegistryKeyError(Exception):
+    pass
+
+
 class Registry(dict):
     """ the registry of models and their validators """
     def __init__(self):
         super().__init__()
         self.synced = False
+
+    def __getitem__(self, item):
+        try:
+            return super().__getitem__(item)
+        except KeyError:
+            raise RegistryKeyError(f"{item} not in REGISTRY")
 
     def sync_to_db(self):
         """ ensure a record for each validator exists in the database """
