@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import (
-    Dict, Generator, Iterator, List, Optional, Tuple, Type, Set
+    Dict, Generator, List, Optional, Tuple, Type, Set, Any
 )
 
 from django.core.exceptions import ObjectDoesNotExist, FieldError
@@ -8,11 +8,13 @@ from django.db import models, transaction
 from tqdm import tqdm
 
 from .models import (
-    ExceptionInfoMixin, FailingObject, Validator
+    ExceptionInfoMixin, FailingObject, Validator  # noqa
 )
 from .registry import REGISTRY, ValidatorInfo
-from .results import PASS, FAIL, NA, EXCEPTION, Result, Status, SummaryEx
-from .types import ResultType, check_return_value
+from .results import (
+    check_return_value, PASS, FAIL, NA, EXCEPTION,
+    ExceptionInfo, Result, Status, SummaryEx
+)
 from .utils import queryset_iterator, chunk, partition
 
 from .logging import logger
@@ -28,9 +30,9 @@ class ResultHandlerMixin:
     @staticmethod
     def handle_return_value(valinfo: ValidatorInfo,
                             obj: models.Model,
-                            retval: ResultType,
-                            exinfo: Optional[dict]
-                            ) -> Tuple[Type[Result], Optional[dict], Optional[bool]]:
+                            retval: Any,
+                            exinfo: Optional[ExceptionInfo]
+                            ) -> Tuple[Type[Result], Optional[ExceptionInfo], Optional[bool]]:
         """ handle the value returned by an instance-method validator
 
          :returns: a tuple (result, exception_info, allowed_to_fail)
@@ -53,7 +55,7 @@ class ResultHandlerMixin:
                 elif retval.comment:
                     extra_args["comment"] = retval.comment
             elif result is EXCEPTION:
-                extra_args["comment"] = exinfo["exc_type"]
+                extra_args["comment"] = exinfo.exc_type
 
             fobj, _ = FailingObject.all_objects.update_or_create(
                 validator_id=valinfo.get_validator_id(),
@@ -81,7 +83,7 @@ class ResultHandlerMixin:
          :return: the completed Summary object
         """
         summary = summary.complete()
-        extra_args = summary.exception_info.copy()
+        extra_args = summary.exception_info_dict
         if summary.status == Status.PASSING:
             extra_args["last_run_time"] = datetime.now()
 
@@ -170,7 +172,7 @@ class InstanceMethodRunner(ResultHandlerMixin):
     def run_for_object(self,
                        valinfos: List[ValidatorInfo],
                        obj: models.Model
-                       ) -> Iterator[ValidatorInfo]:
+                       ) -> Generator[ValidatorInfo, None, None]:
         """ run each data validator on the given object
 
          :returns: the list of ValidatorInfos that did not hit an exception
@@ -182,8 +184,8 @@ class InstanceMethodRunner(ResultHandlerMixin):
             else:
                 # stop calling this validator if an exception was hit
                 self._summaries.pop(valinfo)
-                exinfo["exc_obj_pk"] = obj.pk
-                summary = SummaryEx(exception_info=exinfo)
+                exinfo.exc_obj_pk = obj.pk
+                summary = SummaryEx.from_exception_info(exinfo)
                 self.summaries[valinfo] = self.handle_summary(
                     valinfo, summary, skip_failures=True
                 )
@@ -191,7 +193,7 @@ class InstanceMethodRunner(ResultHandlerMixin):
     def run_validator_for_object(self,
                                  valinfo: ValidatorInfo,
                                  obj: models.Model
-                                 ) -> Optional[dict]:
+                                 ) -> Optional[ExceptionInfo]:
         """ run the given data validator for a given object
 
          :returns: the exception info if there was any
@@ -312,7 +314,7 @@ class ClassMethodRunner(ResultHandlerMixin):
             summary = SummaryEx.from_return_value(retval)
         except Exception:
             exinfo = ExceptionInfoMixin.get_exception_info()
-            summary = SummaryEx(exception_info=exinfo)
+            summary = SummaryEx.from_exception_info(exinfo)
 
         self.summaries[valinfo] = self.handle_summary(valinfo, summary)
 
@@ -448,7 +450,7 @@ class ObjectValidationRunner(ResultHandlerMixin):
     @transaction.atomic
     def update_validator(valinfo: ValidatorInfo,
                          result: Type[Result],
-                         exinfo: Optional[dict]
+                         exinfo: Optional[ExceptionInfo]
                          ) -> None:
         print("updating validator", valinfo.method_name, result)
         # running validation for one object may change the status of the
@@ -458,16 +460,12 @@ class ObjectValidationRunner(ResultHandlerMixin):
             return  # don't update
         elif result is EXCEPTION:
             validator.status = Status.EXCEPTION
-            validator.exc_type = exinfo["exc_type"]
-            validator.exc_traceback = exinfo["exc_traceback"]
-            validator.exc_obj_pk = exinfo["exc_obj_pk"]
+            validator.__dict__.update(exinfo.__dict__)
             validator.save()
             return
 
         failures = validator.failing_objects.filter(is_valid=True, allowed_to_fail=False)
         new_status = Status.PASSING if failures.count() == 0 else Status.FAILING
-        print(new_status)
         if validator.status != new_status:
-            print("saving")
             validator.status = new_status
             validator.save()

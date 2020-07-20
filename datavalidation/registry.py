@@ -134,7 +134,7 @@ def data_validator(_method: Optional[ValidatorType] = None,
 
 def _data_validator(select_related: Union[Sequence, str, None] = None,
                     prefetch_related: Union[Sequence, str, None] = None,
-                    ) -> ValidatorType:
+                    ) -> Callable:
     """ add decorator arguments to the data validator """
     if select_related is None:
         select_related = set()

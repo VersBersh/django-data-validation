@@ -1,8 +1,8 @@
-from typing import Callable, List, NewType, Optional, Tuple, Type, Union
+from typing import Callable, List, NewType, Type, Union
 
 from django.db import models
 
-from .results import Result, PASS, FAIL, NA, EXCEPTION, Summary
+from .results import Result, PASS, FAIL, Summary
 
 
 # the return type of an instance method data_validator
@@ -18,32 +18,20 @@ SummaryType = NewType(
     ]
 )
 
-# the type for a data_validator
-ValidatorType = NewType(
-    "ValidatorType",
-    Callable[[models.Model], Union[ResultType, SummaryType]]
+# the type for an instance method validator
+InstanceValidatorType = NewType(
+    "InstanceValidatorType",
+    Callable[[models.Model], ResultType]
 )
 
+# the type for a class method validator
+ClassValidatorType = NewType(
+    "ClassValidatorType",
+    Callable[[models.Model], SummaryType]
+)
 
-def check_return_value(return_value: ResultType,
-                       exception_info: Optional[dict] = None,
-                       object_pk: Optional[int] = None,
-                       ) -> Tuple[Type[Result], Optional[dict]]:
-    """ check that the user has returned a valid ResultType
-
-     :returns: the Status and exception info if there is any
-    """
-    if exception_info is not None:
-        return EXCEPTION, exception_info
-    elif return_value is PASS or isinstance(return_value, PASS) or return_value is True:
-        return PASS, None
-    elif return_value is FAIL or isinstance(return_value, FAIL) or return_value is False:
-        return FAIL, None
-    elif return_value is NA or isinstance(return_value, NA) or return_value is True:
-        return NA, None
-    else:
-        return EXCEPTION, {
-            "exc_type": "TypeError('data validators must return datavalidator.PASS, "
-                        "datavalidator.FAIL, datavalidator.NA, True, or False')",
-            "exc_obj_pk": object_pk,
-        }
+# the type for a generic validator method
+ValidatorType = NewType(
+    "ValidatorType",
+    Union[InstanceValidatorType, ClassValidatorType]
+)

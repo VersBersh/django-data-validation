@@ -1,6 +1,6 @@
 import sys
 import traceback
-from typing import Optional, Dict, TYPE_CHECKING, Type
+from typing import TYPE_CHECKING, Type
 
 import enumfields
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -13,7 +13,7 @@ from .constants import (
     MAX_DESCRIPTION_LEN,
     MAX_TRACEBACK_LEN,
 )
-from .results import Status
+from .results import ExceptionInfo, Status
 
 
 __all__ = [
@@ -39,7 +39,7 @@ class ExceptionInfoMixin(models.Model):
         abstract = True
 
     @classmethod
-    def get_exception_info(cls) -> Dict[str, Optional[str]]:
+    def get_exception_info(cls) -> ExceptionInfo:
         """ return the exception info of the current exception
 
          call this method while handling an exception. If called outside
@@ -53,7 +53,7 @@ class ExceptionInfoMixin(models.Model):
                 tb_str = f"{frame}\n{tb_str}"
             else:
                 break
-        return dict(
+        return ExceptionInfo(
             exc_type=repr(exc),
             exc_traceback=tb_str
         )
