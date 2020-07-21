@@ -142,6 +142,71 @@
 </dd></dl>
 
 </div>
+<div class="section" id="module-data_validation.admin">
+<span id="data-validation-admin"></span><h2>data_validation.admin<a class="headerlink" href="#module-data_validation.admin" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="data_validation.admin.DataValidationMixin">
+<em class="property">class </em><code class="sig-prename descclassname">data_validation.admin.</code><code class="sig-name descname">DataValidationMixin</code><a class="headerlink" href="#data_validation.admin.DataValidationMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds validation results to the django admin. See <a class="reference internal" href="admin.html#admin"><span class="std std-ref">Setting up the Admin</span></a> for details.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="data-validation-config">
+<span id="module-data-validation-config"></span><h2>data_validation.config<a class="headerlink" href="#data-validation-config" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="data_validation.admin.Config">
+<em class="property">class </em><code class="sig-prename descclassname">data_validation.admin.</code><code class="sig-name descname">Config</code><a class="headerlink" href="#data_validation.admin.Config" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><p>Configuration options for data validation</p>
+</div></blockquote>
+<dl class="py attribute">
+<dt id="data_validation.admin.Config.exclude">
+<code class="sig-name descname">exclude</code><em class="property">: bool</em><a class="headerlink" href="#data_validation.admin.Config.exclude" title="Permalink to this definition">¶</a></dt>
+<dd><p>if True, the model will be excluded from data validation. You might want this if the model is a non-abstract base model in an inheritance hierarchy.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-data_validation.models">
+<span id="data-validation-models"></span><span id="module-data-validation-models"></span><h2>data_validation.models<a class="headerlink" href="#module-data_validation.models" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="data_validation.models.DataValidaitonMixin">
+<em class="property">class </em><code class="sig-prename descclassname">data_validation.models.</code><code class="sig-name descname">DataValidaitonMixin</code><a class="headerlink" href="#data_validation.models.DataValidaitonMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides methods to a django model to query the objects that fail data validation</p>
+<dl class="py method">
+<dt id="data_validation.models.DataValidaitonMixin.datavalidaiton_results">
+<em class="property">property </em><code class="sig-name descname">datavalidaiton_results</code><a class="headerlink" href="#data_validation.models.DataValidaitonMixin.datavalidaiton_results" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the QuerySet objects that failed data validation. The QuerySet model is of type data_validation.models.FailingObject</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="data_validation.models.DataValidaitonMixin.datavalidation_passing">
+<em class="property">property </em><code class="sig-name descname">datavalidation_passing</code><a class="headerlink" href="#data_validation.models.DataValidaitonMixin.datavalidation_passing" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>True if no objects fail validation (except those marked <cite>allowed to fail</cite>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="data_validation.models.DataValidaitonMixin.datavalidation_status">
+<em class="property">classmethod </em><code class="sig-name descname">datavalidation_status</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#data_validation.models.DataValidaitonMixin.datavalidation_status" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the <code class="docutils literal notranslate"><span class="pre">data_validaiton.results.Status</span></code> of the model</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 <div class="section" id="module-data_validation.runners">
 <span id="data-validation-runners"></span><h2>data_validation.runners<a class="headerlink" href="#module-data_validation.runners" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
@@ -187,54 +252,6 @@
 </dd></dl>
 
 </div>
-<div class="section" id="module-data_validation.models">
-<span id="data-validation-models"></span><span id="module-data-validation-models"></span><h2>data_validation.models<a class="headerlink" href="#module-data_validation.models" title="Permalink to this headline">¶</a></h2>
-<dl class="py class">
-<dt id="data_validation.models.DataValidaitonMixin">
-<em class="property">class </em><code class="sig-prename descclassname">data_validation.models.</code><code class="sig-name descname">DataValidaitonMixin</code><a class="headerlink" href="#data_validation.models.DataValidaitonMixin" title="Permalink to this definition">¶</a></dt>
-<dd><p>Provides methods to a django model to query the objects that fail data validation</p>
-<dl class="py method">
-<dt id="data_validation.models.DataValidaitonMixin.datavalidaiton_results">
-<em class="property">property </em><code class="sig-name descname">datavalidaiton_results</code><a class="headerlink" href="#data_validation.models.DataValidaitonMixin.datavalidaiton_results" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>the QuerySet objects that failed data validation. The QuerySet model is of type data_validation.models.FailingObject</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt id="data_validation.models.DataValidaitonMixin.datavalidation_passing">
-<em class="property">property </em><code class="sig-name descname">datavalidation_passing</code><a class="headerlink" href="#data_validation.models.DataValidaitonMixin.datavalidation_passing" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>True if no objects fail validation (except those marked <cite>allowed to fail</cite>)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt id="data_validation.models.DataValidaitonMixin.datavalidation_status">
-<em class="property">classmethod </em><code class="sig-name descname">datavalidation_status</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#data_validation.models.DataValidaitonMixin.datavalidation_status" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>the <code class="docutils literal notranslate"><span class="pre">data_validaiton.results.Status</span></code> of the model</p>
-</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="module-data_validation.admin">
-<span id="data-validation-admin"></span><h2>data_validation.admin<a class="headerlink" href="#module-data_validation.admin" title="Permalink to this headline">¶</a></h2>
-<dl class="py class">
-<dt id="data_validation.admin.DataValidationMixin">
-<em class="property">class </em><code class="sig-prename descclassname">data_validation.admin.</code><code class="sig-name descname">DataValidationMixin</code><a class="headerlink" href="#data_validation.admin.DataValidationMixin" title="Permalink to this definition">¶</a></dt>
-<dd><p>Adds validation results to the django admin. See <a class="reference internal" href="admin.html#admin"><span class="std std-ref">Setting up the Admin</span></a> for details.</p>
-</dd></dl>
-
-</div>
 </div>
 
 
@@ -254,6 +271,7 @@
 <li class="toctree-l1"><a class="reference internal" href="admin.html">Setting up the Admin</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="celery.html">Celery Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 </ul>
 </div>
 

@@ -13,3 +13,4 @@ Django Data Validation
    admin
    api
    celery
+   contributing

@@ -69,25 +69,17 @@
 </div>
 <div class="section" id="configuration">
 <h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
-<p>If you want more control over how each model is validated you can add a class to your model called <code class="docutils literal notranslate"><span class="pre">DataValidationConfig</span></code> (similar to <code class="docutils literal notranslate"><span class="pre">Meta</span></code>)</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyModel</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
-    <span class="k">class</span> <span class="nc">DataValidationConfig</span><span class="p">:</span>
+<p>If you want more control over how each model is validated you can add a class to your model called that inherits from <code class="docutils literal notranslate"><span class="pre">data_validation.config.Config</span></code> (similar to <code class="docutils literal notranslate"><span class="pre">Meta</span></code>)</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">data_validation.config</span> <span class="kn">import</span> <span class="n">Config</span>
+
+<span class="k">class</span> <span class="nc">MyModel</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="c1"># the name of the class is not important</span>
+    <span class="k">class</span> <span class="nc">DataValidationConfig</span><span class="p">(</span><span class="n">Config</span><span class="p">):</span>
         <span class="n">exclude</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="o">...</span>
 </pre></div>
 </div>
-<p>Below is the full list of available options</p>
-<dl class="py class">
-<dt id="DataValidationConfig">
-<em class="property">class </em><code class="sig-name descname">DataValidationConfig</code><a class="headerlink" href="#DataValidationConfig" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py attribute">
-<dt id="DataValidationConfig.exclude">
-<code class="sig-name descname">exclude</code><em class="property">: bool</em><a class="headerlink" href="#DataValidationConfig.exclude" title="Permalink to this definition">¶</a></dt>
-<dd><p>if True, the model will be excluded from data validation. You might want this if the model is a non-abstract base model in an inheritance hierarchy.</p>
-</dd></dl>
-
-</dd></dl>
-
+<p>See <a class="reference internal" href="api.html#module-data-validation-config"><span class="std std-ref">data_validation.config</span></a> for the full list of options available</p>
 </div>
 </div>
 
@@ -108,6 +100,7 @@
 <li class="toctree-l1"><a class="reference internal" href="admin.html">Setting up the Admin</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="celery.html">Celery Integration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing</a></li>
 </ul>
 </div>
 

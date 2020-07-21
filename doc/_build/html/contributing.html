@@ -1,0 +1,179 @@
+
+
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contributing &#8212; Django Data Validation 0.0.1-alpha documentation</title>
+    <link rel="stylesheet" href="_static/ddv.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/local_fonts.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="_static/jquery.cookie.js"></script>
+    <script src="_static/p_sphinx_theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Celery Integration" href="celery.html" /> 
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head><body>
+      <div class="relbar-top">
+            
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="celery.html" title="Celery Integration"
+             accesskey="P">previous</a> &nbsp; &nbsp;</li>
+      <li><a href="index.html">Django Data Validation 0.0.1-alpha documentation</a> &#187;</li>
+
+        <li class="nav-item nav-item-this"><a href="">Contributing</a></li> 
+      </ul>
+    </div>
+      </div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="contributing">
+<span id="id1"></span><h1>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h1>
+<p>Contributions are more than welcome!</p>
+<div class="section" id="types-of-contributions">
+<h2>Types of Contributions<a class="headerlink" href="#types-of-contributions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="report-bugs-or-request-features">
+<h3>Report Bugs or Request Features<a class="headerlink" href="#report-bugs-or-request-features" title="Permalink to this headline">¶</a></h3>
+<p>On github: <a class="reference external" href="https://github.com/VersBersh/django-data-validation/issues">https://github.com/VersBersh/django-data-validation/issues</a></p>
+<p>If you are reporting a bug, please include:</p>
+<ul class="simple">
+<li><p>Your operating system name and version.</p></li>
+<li><p>Any details about your local setup that might be helpful in troubleshooting.</p></li>
+<li><p>Detailed steps to reproduce the bug.</p></li>
+</ul>
+</div>
+<div class="section" id="fix-bugs-or-implement-features">
+<h3>Fix Bugs or Implement Features<a class="headerlink" href="#fix-bugs-or-implement-features" title="Permalink to this headline">¶</a></h3>
+<p>Look through the GitHub issues for bugs/features</p>
+<p>There is also a <a class="reference external" href="https://trello.com/b/AULMXnTC/django-data-validation">Trello Board</a> with some ideas that i’d like to implement (new idea - migrate trello to github)</p>
+</div>
+</div>
+<div class="section" id="development-setup-linux">
+<h2>Development Setup (Linux)<a class="headerlink" href="#development-setup-linux" title="Permalink to this headline">¶</a></h2>
+<p>Django-data-validation is developed on Ubuntu-18.04, but will probably work on macOS. If anyone uses this package at all, I might consider making it available on Windows.</p>
+<ol class="arabic simple">
+<li><p>Fork the <cite>django-data-validation</cite> repo on GitHub.</p></li>
+<li><p>Clone your fork locally</p></li>
+<li><p>Set up a virtual environment and activate it. Optional: I high recommend <a class="reference external" href="https://github.com/pyenv/pyenv">pyenv</a> for managing different python versions. <a class="reference external" href="https://github.com/pyenv/pyenv-virtualenv">pyenv-virtualenv</a> is also a nice way to manage your virtual environments. If using pyenv and virtualenv you can write:</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pyenv virtualenv <span class="m">3</span>.6.9 django-data-validation
+<span class="nb">source</span> <span class="s2">&quot;</span><span class="nv">$PYENV_ROOT</span><span class="s2">/versions/django-data-validation/bin/activate&quot;</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="3">
+<li><p>run the setup script for development (this will add the pre-commit hooks, install python dependencies, setup node, and add a .pth file to site-packages to make the directories discoverable by python)</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> ./django-data-tests
+chmod +x ./setup/dev_setup.sh
+./setup/dev_setup.sh
+</pre></div>
+</div>
+<ol class="arabic simple" start="4">
+<li><p>Optional: if you want to use a specific database in the django test project, create a <cite>./test_proj/local_settings.py</cite> file with the <code class="docutils literal notranslate"><span class="pre">DATABAESS</span></code> config. I am using postgres, but <cite>settings.py</cite> will default to sqlite3</p></li>
+</ol>
+</div>
+<div class="section" id="pull-request-guidelines">
+<h2>Pull Request Guidelines<a class="headerlink" href="#pull-request-guidelines" title="Permalink to this headline">¶</a></h2>
+<p>Before you submit a pull request, check that it meets these guidelines:</p>
+<ol class="arabic simple">
+<li><p>The pull request should include tests</p></li>
+<li><p>If the pull request adds functionality, the docs should be updated.</p></li>
+<li><p>flake8 and pytest are passing</p></li>
+</ol>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div class="sphinxglobaltoc">
+<h3><a href="index.html">Table of Contents</a></h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_validators.html">Writing Data Valiators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuring_models.html">Setting up Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="admin.html">Setting up the Admin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="celery.html">Celery Integration</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Contributing</a></li>
+</ul>
+</div>
+
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/contributing.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+      <div class="relbar-bottom">
+            
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> &nbsp; &nbsp;</li>
+        <li class="right" >
+          <a href="celery.html" title="Celery Integration"
+             >previous</a> &nbsp; &nbsp;</li>
+      <li><a href="index.html">Django Data Validation 0.0.1-alpha documentation</a> &#187;</li>
+
+        <li class="nav-item nav-item-this"><a href="">Contributing</a></li> 
+      </ul>
+    </div>
+      </div>
+
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Oliver Chambers.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.1.2.
+    </div>
+      <!-- PSphinxTheme -->
+  </body>
+</html>
