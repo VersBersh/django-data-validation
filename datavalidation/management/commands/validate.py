@@ -38,7 +38,6 @@ class Command(BaseCommand):
             f"got: {label}"
         )
         components = label.split(".")
-        print(components)
         if len(components) == 1:
             app_label = components[0]
             appcfg = apps.get_app_config(app_label)

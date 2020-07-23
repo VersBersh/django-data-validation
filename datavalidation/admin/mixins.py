@@ -10,7 +10,7 @@ from django.forms import Textarea
 from django.http import HttpRequest, QueryDict
 from django.utils.safestring import mark_safe
 
-from datavalidation.models import FailingObject, Validator
+from datavalidation.models import FailingObject
 from datavalidation.registry import RegistryKeyError
 from datavalidation.runners import ObjectValidationRunner
 from datavalidation.utils import partition
@@ -103,12 +103,8 @@ class DataValidationMixin(_Base):
         # related failing objects have been saved to the database already.
         assert request.method == "POST"
         assert obj is not None
-        # refresh the statuses of class-method validators in case one was
-        # marked allowed_to_fail. Instance-method validators will be
-        # refreshed in ObjectValidationRunner
-        Validator.refresh_statuses(classmethods_only=True)
         try:
-            result = ObjectValidationRunner(obj).run()
+            result = ObjectValidationRunner(obj).run(class_methods=True)
         except RegistryKeyError:
             # the model has no validators. Adding DataValidationMixin to
             # the admin provides no benefit, but it shouldn't crash

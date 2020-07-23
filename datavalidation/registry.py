@@ -1,7 +1,7 @@
 import inspect
 from functools import lru_cache
 from typing import (
-    Callable, Dict, Optional, Sequence, Type, Union, Set,
+    Callable, Dict, Optional, Sequence, Type, Union, Set
 )
 
 from dataclasses import dataclass, field
@@ -10,7 +10,6 @@ from django.db import models
 from .config import get_config
 from .constants import MAX_DESCRIPTION_LEN
 from .types import ValidatorType
-from .utils import is_class_method
 
 
 @dataclass
@@ -24,12 +23,12 @@ class DecoratorArgs:
 class ValidatorInfo:
     """ information about a data validator. """
     model_info: "ModelInfo"
-    method: Callable
     method_name: str
     description: str
-    is_class_method: bool
     select_related: set
     prefetch_related: set
+    instance_method: Optional[ValidatorType] = None
+    class_method: Optional[ValidatorType] = None
 
     def __str__(self):
         mi = self.model_info
@@ -47,7 +46,7 @@ class ValidatorInfo:
             model_name=self.model_info.model_name,
             method_name=self.method_name,
             defaults={
-                "is_class_method": self.is_class_method,
+                "is_class_method": self.class_method is not None,
                 "description": self.description,
             }
         )
@@ -94,7 +93,6 @@ class Registry(dict):
         """ ensure a record for each validator exists in the database """
         if self.synced:
             return
-        print("syncing for real...")
         for model_info in self.values():
             for valinfo in model_info.validators.values():
                 valinfo.get_validator_id()
@@ -152,17 +150,48 @@ def _data_validator(select_related: Union[Sequence, str, None] = None,
         prefetch_related = set(prefetch_related)
 
     def decorator(method: ValidatorType) -> ValidatorType:
-        qualname = getattr(method, "__qualname__", "")
-        # hack: methods defined on classes have "." in their qualified name,
-        # and methods defined within other functions have "<locals>"
-        if "." not in qualname or "<locals>" in qualname:
-            raise ValueError("data validators must be methods of a class")
+        if isinstance(method, classmethod):
+            func = method.__func__
+            func.__classmethod__ = True
+            cache = {"class": func}
+        else:
+            func = method
+            func.__classmethod__ = False
+            cache = {"instance": func}
+
+        def overload(omethod: ValidatorType) -> Callable:
+            if isinstance(omethod, classmethod):
+                ofunc = omethod.__func__
+                if "class" in cache:
+                    raise RuntimeError(
+                        f"overloaded data validators are both class "
+                        f"methods! {omethod.__func__.__qualname__}"
+                    )
+                cache["class"] = omethod.__func__
+            else:
+                ofunc = omethod
+                if "instance" in cache:
+                    raise RuntimeError(
+                        f"overloaded data validators are both instance "
+                        f"methods! {omethod.__qualname__}"
+                    )
+                cache["instance"] = omethod
+            if ofunc.__name__ != func.__name__:
+                raise ValueError(
+                    f"overloaded validators should have the same name: "
+                    f"{func.__qualname__}, {ofunc.__qualname__}"
+                )
+            func._overloads = cache
+            return method
+
         # nb. we cannot determine anything else until the apps are loaded
-        method.__datavalidator__ = True
-        method.__decoratorargs__ = DecoratorArgs(
+        func.__datavalidator__ = True
+        func.__decoratorargs__ = DecoratorArgs(
             select_related=select_related,
             prefetch_related=prefetch_related
         )
+        func._overloads = None
+        method.overload = overload
         return method
 
     return decorator
@@ -199,12 +228,17 @@ def update_registry():
             else:
                 description = method_name.replace("_", " ")
 
-            model_info.validators[method_name] = ValidatorInfo(
+            model_info.validators[method_name] = valinfo = ValidatorInfo(
                 model_info=model_info,
-                method=validator,
                 method_name=method_name,
                 description=description[:MAX_DESCRIPTION_LEN],
-                is_class_method=is_class_method(validator, model),
                 select_related=args.select_related,
                 prefetch_related=args.prefetch_related,
             )
+            if validator._overloads is not None:  # noqa
+                valinfo.instance_method = validator._overloads["instance"]  # noqa
+                valinfo.class_method = validator._overloads["class"]  # noqa
+            elif validator.__classmethod__:
+                valinfo.class_method = validator.__func__
+            else:
+                valinfo.instance_method = validator

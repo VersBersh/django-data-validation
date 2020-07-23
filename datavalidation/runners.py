@@ -127,7 +127,7 @@ class InstanceMethodRunner(ResultHandlerMixin):
         self.model = model
         self.model_info = REGISTRY[model]
         self.validator_infos = validator_infos
-        assert all(not v.is_class_method for v in self.validator_infos)
+        assert all(v.instance_method is not None for v in self.validator_infos)
         self._summaries = {info: SummaryEx() for info in self.validator_infos}
         self.summaries: Dict[ValidatorInfo, SummaryEx] = {}
 
@@ -200,7 +200,7 @@ class InstanceMethodRunner(ResultHandlerMixin):
         """
         # noinspection PyBroadException
         try:
-            retval = valinfo.method(obj)
+            retval = valinfo.instance_method(obj)
             exinfo = None
         except Exception:
             retval = None
@@ -279,7 +279,7 @@ class ClassMethodRunner(ResultHandlerMixin):
         super().__init__()
         self.model = model
         self.validator_infos = validator_infos
-        assert all(v.is_class_method for v in self.validator_infos)
+        assert all(v.class_method is not None for v in self.validator_infos)
         self.summaries: Dict[ValidatorInfo, SummaryEx] = {}
 
     def run(self) -> Dict[ValidatorInfo, SummaryEx]:
@@ -310,7 +310,7 @@ class ClassMethodRunner(ResultHandlerMixin):
         """ run a given class-method validator and hande the result """
         # noinspection PyBroadException
         try:
-            retval = valinfo.method()
+            retval = valinfo.class_method(self.model)
             summary = SummaryEx.from_return_value(retval)
         except Exception:
             exinfo = ExceptionInfoMixin.get_exception_info()
@@ -364,9 +364,9 @@ class ModelValidationRunner:
 
         summaries: Dict[str, Tuple[ValidatorInfo, SummaryEx]] = {}
 
-        validator_infos = [self.model_info.validators[name] for name in self.method_names]
         classmethod_infos, instancemethod_infos = partition(
-            validator_infos, predicate=lambda valinfo: valinfo.is_class_method
+            (self.model_info.validators[name] for name in self.method_names),
+            predicate=lambda valinfo: valinfo.class_method is not None
         )
 
         class_summaries = ClassMethodRunner(self.model, classmethod_infos).run()
@@ -385,26 +385,31 @@ class ObjectValidationRunner(ResultHandlerMixin):
         self.obj = obj
         self.model = obj._meta.model
         self.model_info = REGISTRY[self.model]
-        # only instance methods can be run for a single object
-        self.validator_infos = [
-            valinfo
-            for valinfo in self.model_info.validators.values()
-            if not valinfo.is_class_method
-        ]
+        # note the distinction with ModelValidationRunner, to run a single
+        # object the instance methods take precedence over class methods.
+        # this is the whole point of overloading data validators.
+        self.instancemethod_infos, self.classmethod_infos = partition(
+            self.model_info.validators.values(),
+            predicate=lambda valinfo: valinfo.instance_method is not None
+        )
 
-    def run(self) -> bool:
+    def run(self, class_methods: bool = True) -> bool:
         """ run validation for specified object
+
+         Args:
+            class_methods: if True then also re-run the (non-overloaded)
+                class methods on the model.
 
          :returns: True if there was no validation erros
         """
-        validator_ids = [v.get_validator_id() for v in self.validator_infos]
+        validator_ids = [v.get_validator_id() for v in self.instancemethod_infos]
         FailingObject.all_objects.filter(
             validator_id__in=validator_ids, object_pk=self.obj.pk
         ).update(is_valid=False)
 
-        result = all([
+        instance_result = all([
             self.run_for_object(valinfo)
-            for valinfo in self.validator_infos
+            for valinfo in self.instancemethod_infos
         ])
 
         qs = FailingObject.all_objects.filter(
@@ -416,7 +421,17 @@ class ObjectValidationRunner(ResultHandlerMixin):
         # noinspection PyProtectedMember
         qs._raw_delete(qs.db)
 
-        return result
+        if class_methods:
+            class_results = ClassMethodRunner(self.model, self.classmethod_infos).run()
+        else:
+            class_results = {}
+
+        if not instance_result:
+            return False
+        for summary in class_results.values():
+            if summary.status != Status.PASSING:
+                return False
+        return True
 
     def run_for_object(self, valinfo: ValidatorInfo) -> bool:
         """ run a validator for a single object
@@ -425,7 +440,7 @@ class ObjectValidationRunner(ResultHandlerMixin):
         """
         # noinspection PyBroadException
         try:
-            retval = valinfo.method(self.obj)
+            retval = valinfo.instance_method(self.obj)
             exinfo = None
         except Exception:
             retval = None
@@ -452,7 +467,6 @@ class ObjectValidationRunner(ResultHandlerMixin):
                          result: Type[Result],
                          exinfo: Optional[ExceptionInfo]
                          ) -> None:
-        print("updating validator", valinfo.method_name, result)
         # running validation for one object may change the status of the
         # entire Validator (e.g. if this object was the only one failing)
         validator = Validator.objects.select_for_update().get(id=valinfo.get_validator_id())
@@ -465,6 +479,20 @@ class ObjectValidationRunner(ResultHandlerMixin):
             return
 
         failures = validator.failing_objects.filter(is_valid=True, allowed_to_fail=False)
+
+        # edge case: the validator is overloaded, the class method only
+        # returns a bool (i.e. it doesn't return the objects that failed),
+        # and the validator is Failing. Then we cannot make any inference
+        # about how this single object impacts the validator.
+        is_edge_case = (
+                valinfo.instance_method is not None and
+                valinfo.class_method is not None and
+                failures.count() == 0 and
+                validator.status == Status.FAILING
+        )
+        if is_edge_case:
+            return  # cannot do anything
+
         new_status = Status.PASSING if failures.count() == 0 else Status.FAILING
         if validator.status != new_status:
             validator.status = new_status

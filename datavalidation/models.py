@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Type
 import enumfields
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.db import models, transaction
+from django.db import models
 from django.db.models import QuerySet
 from django.urls import reverse, NoReverseMatch
 
@@ -85,30 +85,6 @@ class Validator(ExceptionInfoMixin, models.Model):
 
     def get_num_allowed_to_fail(self):
         return self.failing_objects.filter(allowed_to_fail=True).count()
-
-    @classmethod
-    @transaction.atomic
-    def refresh_statuses(cls, classmethods_only: bool = False):
-        """ recalculate the status from the failing objects
-
-         A status might need to be recalculated if an object is updated or
-         a failing object is marked allowed to fail. If Validators are
-         currently marked as UNINITIALIZED or EXCEPTION then the new status
-         cannot be determined by counting the number of failing objects so
-         they are not updated
-        """
-        validators = cls.objects.exclude(status__in=[Status.UNINITIALIZED, Status.EXCEPTION])
-        if classmethods_only:
-            validators = validators.filter(is_class_method=True)
-
-        for validator in validators.prefetch_related("failing_objects").select_for_update():
-            if len(validator.failing_objects.filter(allowed_to_fail=False)) == 0:
-                new_status = Status.PASSING
-            else:
-                new_status = Status.FAILING
-            if validator.status != new_status:
-                validator.status = new_status
-                validator.save()
 
     @classmethod
     def get_status_for_model(cls, model: Type[models.Model]) -> Status:
