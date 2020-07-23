@@ -16,11 +16,11 @@ from .constants import (
 from .results import ExceptionInfo, Status
 
 
-__all__ = [
+__all__ = (
     "DataValidationMixin",
     "FailingObject",
     "Validator",
-]
+)
 
 
 class ExceptionInfoMixin(models.Model):

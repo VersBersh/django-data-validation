@@ -12,13 +12,13 @@ class ColouredLogger(logging.Logger):
         self.info(colored(message, color="cyan", attrs=["bold"]))
 
     def cwarning(self, message: str) -> None:
-        self.info(colored(message, color="yellow"))
+        self.warning(colored(message, color="yellow"))
 
     def cerror(self, message: str) -> None:
         self.error(colored(message, color="red", attrs=["bold"]))
 
 
-logger = logging.getLogger("datavalidaiton")
+logger = logging.getLogger("datavalidation")
 logger.setLevel(logging.INFO)
 
 handler = logging.StreamHandler(sys.stdout)

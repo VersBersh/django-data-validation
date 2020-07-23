@@ -94,6 +94,7 @@ class Registry(dict):
         """ ensure a record for each validator exists in the database """
         if self.synced:
             return
+        print("syncing for real...")
         for model_info in self.values():
             for valinfo in model_info.validators.values():
                 valinfo.get_validator_id()
@@ -157,7 +158,8 @@ def _data_validator(select_related: Union[Sequence, str, None] = None,
         if "." not in qualname or "<locals>" in qualname:
             raise ValueError("data validators must be methods of a class")
         # nb. we cannot determine anything else until the apps are loaded
-        method._datavalidation_decorator_args = DecoratorArgs(
+        method.__datavalidator__ = True
+        method.__decoratorargs__ = DecoratorArgs(
             select_related=select_related,
             prefetch_related=prefetch_related
         )
@@ -173,7 +175,7 @@ def update_registry():
 
     for model in apps.get_models():
         validators = inspect.getmembers(
-            model, predicate=lambda m: hasattr(m, "_datavalidation_decorator_args")
+            model, predicate=lambda m: hasattr(m, "__datavalidator__")
         )
         if len(validators) == 0:
             continue
@@ -188,7 +190,7 @@ def update_registry():
             model_name=model_name,
         )
         for method_name, validator in validators:
-            args = validator._datavalidation_decorator_args  # noqa
+            args = validator.__decoratorargs__  # noqa
 
             # read the description from the doc string
             docstring = inspect.getdoc(validator)

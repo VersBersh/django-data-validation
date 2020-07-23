@@ -28,8 +28,10 @@ deps:
 freshdb:
 	dropdb ddv
 	createdb ddv
+	dropdb ddv2
+	createdb ddv2
 	cd test_proj; \
-	python ./manage.py makemigrations; \
 	python ./manage.py migrate; \
+	python ./manage.py migrate --database postgres2; \
 	python ./manage.py createsuperuser; \
 	python ./manage.py add_test_data;

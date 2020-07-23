@@ -1,52 +1,27 @@
 from typing import Type
 
+from django.core.management import call_command
 from django.db import models
 import pytest
 
-from animalconference.models import Animal, Seminar, Habitat
-from datavalidation.logging import logger
 from datavalidation.registry import REGISTRY, ValidatorInfo
 from datavalidation.results import SummaryEx
 from datavalidation.runners import ModelValidationRunner
 
+from django.test import TestCase, TransactionTestCase
+
+TestCase.databases = ("default", "postgres2")
+TransactionTestCase.databases = ("default", "postgres2")
+
 
 # noinspection PyUnusedLocal
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="package")
 def django_db_setup(django_db_setup, django_db_blocker):
     """ add Validators to the test database """
     with django_db_blocker.unblock():
+        print("syncing...")
         REGISTRY.sync_to_db()
-
-
-@pytest.fixture(scope="session")
-def valid_habitats(django_db_blocker):
-    """ add all (6) habitats to the database """
-    with django_db_blocker.unblock():
-        Habitat.objects.populate_database()
-
-
-@pytest.fixture(scope="session")
-def valid_animals(django_db_blocker, valid_habitats):
-    """ add 100 valid Animals to the test database """
-    with django_db_blocker.unblock():
-        count = Animal.objects.count()
-        if count == 0:
-            Animal.objects.populate_database(100)
-        elif count != 100:
-            logger.cwarning("Animal count:", count)
-            raise AssertionError("something went wrong with --reuse-db")
-
-
-@pytest.fixture(scope="session")
-def valid_seminars(django_db_blocker):
-    """ add 10 valid Seminars to the test database """
-    with django_db_blocker.unblock():
-        count = Seminar.objects.count()
-        if count == 0:
-            Seminar.objects.populate_database(10)
-        elif count != 10:
-            logger.cwarning(count)
-            raise AssertionError("something went wrong with --reuse-db")
+        call_command("add_test_data", 20, "--exact")
 
 
 def run_validator(model: Type[models.Model], method_name: str) -> SummaryEx:

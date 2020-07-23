@@ -15,15 +15,24 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "datavalidation.apps.DataValidationConfig",
-    "animalconference.apps.AnimalConferenceConfig",
+    "app1.apps.App1Config",
+    "app2.apps.App2Config",
 ]
 
+# should be overwritten in local_settings.py
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": (BASE_DIR.parent / "db.sqlite3").as_posix(),
     },
+    "postgres2": {
+        # second database used for testing
+    }
 }
+
+DATABASE_ROUTERS = [
+    "app2.routers.App2Router",
+]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

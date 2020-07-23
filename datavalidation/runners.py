@@ -20,10 +20,10 @@ from .utils import queryset_iterator, chunk, partition
 from .logging import logger
 
 
-__all__ = [
+__all__ = (
     "ModelValidationRunner",
     "ObjectValidationRunner",
-]
+)
 
 
 class ResultHandlerMixin:

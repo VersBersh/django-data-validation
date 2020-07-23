@@ -65,7 +65,7 @@ def timer(output: Callable):
             seconds = time.time() - start_time
             hours, h = divmod(seconds, 60*60)
             minutes, seconds = divmod(h, 60)
-            output(f"Total Execution Time: {hours}h:{minutes}m:{seconds}s")
+            output(f"Total Execution Time: {hours:02.0f}h:{minutes:02.0f}m:{seconds:04.1f}s")
             return ret
         return inner
     return wrapper
