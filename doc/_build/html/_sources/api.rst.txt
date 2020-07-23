@@ -10,9 +10,9 @@ management commands
 
 .. code-block:: bash
 
-    ./manage.py run_data_validation [--models <MODEL_LIST>]
+    ./manage.py validate [LABELS]
 
-``--models`` accepts a space seperated list of models of the form ``<app_label>.<model_name>``. If the models flag is not provided then all models are validated.
+``LABELS`` -- an (optional) space seperated list of labels of the form ``<app_label>``, ``<app_label>.<model_name>``, or ``<app_label>.<model_name>::<validator_name>``. If no labels are provided then all models are validated.
 
 
 
