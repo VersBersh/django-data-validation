@@ -20,7 +20,7 @@
     <script src="_static/p_sphinx_theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Writing Data Valiators" href="data_validators.html" />
+    <link rel="next" title="Writing Data Validators" href="data_validators.html" />
     <link rel="prev" title="Django Data Validation" href="index.html" /> 
             <meta name="viewport" content="width=device-width, initial-scale=1">
   </head><body>
@@ -36,7 +36,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="data_validators.html" title="Writing Data Valiators"
+          <a href="data_validators.html" title="Writing Data Validators"
              accesskey="N">next</a> &nbsp; &nbsp;</li>
         <li class="right" >
           <a href="index.html" title="Django Data Validation"
@@ -116,16 +116,16 @@
 </pre></div>
 </div>
 <p>To run the validation for all models</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./manage.py run_data_validation
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./manage.py validate
 </pre></div>
 </div>
 <p>or for a specific model</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./manage.py run_data_validation --models &lt;app_label&gt;.&lt;model_name&gt;
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./manage.py validate yourapp.YouModel
 </pre></div>
 </div>
 <p>See <a class="reference external" href="https://django-data-validation.readthedocs.io/en/latest/data_validators.html">Writing Data Validators</a> for more details and examples of data validators</p>
 <p>Optionally, you can add the <code class="docutils literal notranslate"><span class="pre">data_validaiton.models.DataValidationMixin</span></code> to your models to provide some additional methods for querying the validation results</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">data_validation.models</span> <span class="kn">import</span> <span class="n">DataValidationMixin</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">datavalidation.models</span> <span class="kn">import</span> <span class="n">DataValidationMixin</span>
 
 <span class="k">class</span> <span class="nc">YouModel</span><span class="p">(</span><span class="n">DataValidationMixin</span><span class="p">,</span> <span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
     <span class="o">...</span>
@@ -151,7 +151,7 @@
 <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Start</a></li>
-<li class="toctree-l1"><a class="reference internal" href="data_validators.html">Writing Data Valiators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_validators.html">Writing Data Validators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="configuring_models.html">Setting up Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="admin.html">Setting up the Admin</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
@@ -194,7 +194,7 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> &nbsp; &nbsp;</li>
         <li class="right" >
-          <a href="data_validators.html" title="Writing Data Valiators"
+          <a href="data_validators.html" title="Writing Data Validators"
              >next</a> &nbsp; &nbsp;</li>
         <li class="right" >
           <a href="index.html" title="Django Data Validation"

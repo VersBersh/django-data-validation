@@ -120,13 +120,13 @@ To run the validation for all models
 
 .. code-block:: bash
 
-    ./manage.py run_data_validation
+    ./manage.py validate
 
 or for a specific model
 
 .. code-block:: bash
 
-    ./manage.py run_data_validation --models <app_label>.<model_name>
+    ./manage.py validate yourapp.YouModel
 
 .. nb. the :ref: directive won't work from the readme so we have to link directly
 
@@ -136,7 +136,7 @@ Optionally, you can add the ``data_validaiton.models.DataValidationMixin`` to yo
 
 .. code-block:: python
 
-    from data_validation.models import DataValidationMixin
+    from datavalidation.models import DataValidationMixin
 
     class YouModel(DataValidationMixin, models.Model):
         ...

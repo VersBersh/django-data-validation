@@ -58,18 +58,19 @@
 <span id="api"></span><h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="management-commands">
 <h2>management commands<a class="headerlink" href="#management-commands" title="Permalink to this headline">¶</a></h2>
-<p><strong>run_data_validation</strong></p>
+<p><strong>validate</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./manage.py validate <span class="o">[</span>LABELS<span class="o">]</span>
 </pre></div>
 </div>
+<p>run the data validation.</p>
 <p><code class="docutils literal notranslate"><span class="pre">LABELS</span></code> – an (optional) space seperated list of labels of the form <code class="docutils literal notranslate"><span class="pre">&lt;app_label&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">&lt;app_label&gt;.&lt;model_name&gt;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&lt;app_label&gt;.&lt;model_name&gt;::&lt;validator_name&gt;</span></code>. If no labels are provided then all models are validated.</p>
 </div>
 <div class="section" id="module-data_validation">
-<span id="data-validation"></span><h2>data_validation<a class="headerlink" href="#module-data_validation" title="Permalink to this headline">¶</a></h2>
+<span id="datavalidation"></span><h2>datavalidation<a class="headerlink" href="#module-data_validation" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt id="data_validation.data_validator">
 <code class="sig-prename descclassname">data_validation.</code><code class="sig-name descname">data_validator</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">select_related</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">prefetch_related</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_validation.data_validator" title="Permalink to this definition">¶</a></dt>
-<dd><p>A decorator that identifies a method on a django model as a data validator. The decorated method may be a regular (instance) method or a <cite>&#64;classmethod</cite> on a django model. It must take only one parameter (<cite>self</cite> or <cite>cls</cite>) and return a validation result. See <a class="reference internal" href="data_validators.html#data-validators"><span class="std std-ref">Writing Data Valiators</span></a> for examples.</p>
+<dd><p>A decorator that identifies a method on a django model as a data validator. The decorated method may be a regular (instance) method or a <cite>&#64;classmethod</cite> on a django model. It must take only one parameter (<cite>self</cite> or <cite>cls</cite>) and return a validation result. See <a class="reference internal" href="data_validators.html#data-validators"><span class="std std-ref">Writing Data Validators</span></a> for examples.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -116,7 +117,7 @@
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>num_na</strong> (<em>int</em>) – the number of objects for which validation is not applicable</p></li>
 <li><p><strong>num_passing</strong> (<em>int</em>) – the number of objects that pass validation</p></li>
-<li><p><strong>failures</strong> (<em>Union</em><em>[</em><em>QuerySet</em><em>,</em><em>List</em><em>[</em><em>models.Model</em><em>]</em><em>,</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – a QuerySet, list of objects or their ids that fail validation. See <a class="reference internal" href="data_validators.html#data-validators"><span class="std std-ref">Writing Data Valiators</span></a> for examples.</p></li>
+<li><p><strong>failures</strong> (<em>Union</em><em>[</em><em>QuerySet</em><em>,</em><em>List</em><em>[</em><em>models.Model</em><em>]</em><em>,</em><em>List</em><em>[</em><em>int</em><em>]</em><em>]</em>) – a QuerySet, list of objects or their ids that fail validation. See <a class="reference internal" href="data_validators.html#data-validators"><span class="std std-ref">Writing Data Validators</span></a> for examples.</p></li>
 </ul>
 </dd>
 </dl>
@@ -143,7 +144,7 @@
 
 </div>
 <div class="section" id="module-data_validation.admin">
-<span id="data-validation-admin"></span><h2>data_validation.admin<a class="headerlink" href="#module-data_validation.admin" title="Permalink to this headline">¶</a></h2>
+<span id="datavalidation-admin"></span><h2>datavalidation.admin<a class="headerlink" href="#module-data_validation.admin" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="data_validation.admin.DataValidationMixin">
 <em class="property">class </em><code class="sig-prename descclassname">data_validation.admin.</code><code class="sig-name descname">DataValidationMixin</code><a class="headerlink" href="#data_validation.admin.DataValidationMixin" title="Permalink to this definition">¶</a></dt>
@@ -151,8 +152,8 @@
 </dd></dl>
 
 </div>
-<div class="section" id="data-validation-config">
-<span id="module-data-validation-config"></span><h2>data_validation.config<a class="headerlink" href="#data-validation-config" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="datavalidation-config">
+<span id="module-data-validation-config"></span><h2>datavalidation.config<a class="headerlink" href="#datavalidation-config" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="data_validation.admin.Config">
 <em class="property">class </em><code class="sig-prename descclassname">data_validation.admin.</code><code class="sig-name descname">Config</code><a class="headerlink" href="#data_validation.admin.Config" title="Permalink to this definition">¶</a></dt>
@@ -169,7 +170,7 @@
 
 </div>
 <div class="section" id="module-data_validation.models">
-<span id="data-validation-models"></span><span id="module-data-validation-models"></span><h2>data_validation.models<a class="headerlink" href="#module-data_validation.models" title="Permalink to this headline">¶</a></h2>
+<span id="datavalidation-models"></span><span id="module-data-validation-models"></span><h2>datavalidation.models<a class="headerlink" href="#module-data_validation.models" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="data_validation.models.DataValidaitonMixin">
 <em class="property">class </em><code class="sig-prename descclassname">data_validation.models.</code><code class="sig-name descname">DataValidaitonMixin</code><a class="headerlink" href="#data_validation.models.DataValidaitonMixin" title="Permalink to this definition">¶</a></dt>
@@ -208,7 +209,7 @@
 
 </div>
 <div class="section" id="module-data_validation.runners">
-<span id="data-validation-runners"></span><h2>data_validation.runners<a class="headerlink" href="#module-data_validation.runners" title="Permalink to this headline">¶</a></h2>
+<span id="datavalidation-runners"></span><h2>datavalidation.runners<a class="headerlink" href="#module-data_validation.runners" title="Permalink to this headline">¶</a></h2>
 <dl class="py class">
 <dt id="data_validation.runners.ModelValidationRunner">
 <em class="property">class </em><code class="sig-prename descclassname">data_validation.runners.</code><code class="sig-name descname">ModelValidationRunner</code><span class="sig-paren">(</span><em class="sig-param">model</em><span class="optional">[</span>, <em class="sig-param">method_names=None</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#data_validation.runners.ModelValidationRunner" title="Permalink to this definition">¶</a></dt>
@@ -237,7 +238,7 @@
 <dl class="py class">
 <dt id="data_validation.runners.ObjectValidationRunner">
 <em class="property">class </em><code class="sig-prename descclassname">data_validation.runners.</code><code class="sig-name descname">ObjectValidationRunner</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="headerlink" href="#data_validation.runners.ObjectValidationRunner" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run all <cite>instance methods</cite> data_validators for a given object. (see <a class="reference internal" href="data_validators.html#data-validators"><span class="std std-ref">Writing Data Valiators</span></a> for the destinction on instance and class method validators)</p>
+<dd><p>Run all <cite>instance methods</cite> data_validators for a given object. (see <a class="reference internal" href="data_validators.html#data-validators"><span class="std std-ref">Writing Data Validators</span></a> for the destinction on instance and class method validators)</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>obj</strong> (<em>django.db.models.Model</em>) – the object to validate</p>
@@ -266,7 +267,7 @@
 <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
-<li class="toctree-l1"><a class="reference internal" href="data_validators.html">Writing Data Valiators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data_validators.html">Writing Data Validators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="configuring_models.html">Setting up Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="admin.html">Setting up the Admin</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a></li>

@@ -6,17 +6,19 @@ API Reference
 management commands
 -------------------
 
-**run_data_validation**
+**validate**
 
 .. code-block:: bash
 
     ./manage.py validate [LABELS]
 
+run the data validation.
+
 ``LABELS`` -- an (optional) space seperated list of labels of the form ``<app_label>``, ``<app_label>.<model_name>``, or ``<app_label>.<model_name>::<validator_name>``. If no labels are provided then all models are validated.
 
 
 
-data_validation
+datavalidation
 ---------------
 
 .. module:: data_validation
@@ -62,7 +64,7 @@ data_validation
       WARNING
 
 
-data_validation.admin
+datavalidation.admin
 ---------------------
 
 .. module:: data_validation.admin
@@ -74,7 +76,7 @@ data_validation.admin
 
 .. _module-data_validation.config:
 
-data_validation.config
+datavalidation.config
 ----------------------
 
 .. class:: Config
@@ -90,7 +92,7 @@ data_validation.config
 
 .. _module-data_validation.models:
 
-data_validation.models
+datavalidation.models
 ----------------------
 
 .. module:: data_validation.models
@@ -115,7 +117,7 @@ data_validation.models
         :returns: the ``data_validaiton.results.Status`` of the model
 
 
-data_validation.runners
+datavalidation.runners
 -----------------------
 
 .. module:: data_validation.runners
