@@ -19,7 +19,6 @@ TransactionTestCase.databases = ("default", "postgres2")
 def django_db_setup(django_db_setup, django_db_blocker):
     """ add Validators to the test database """
     with django_db_blocker.unblock():
-        print("syncing...")
         REGISTRY.sync_to_db()
         call_command("add_test_data", 20, "--exact")
 

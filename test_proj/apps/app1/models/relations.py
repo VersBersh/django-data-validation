@@ -110,8 +110,8 @@ class RelatedFields(models.Model):
         """
         return PASS
 
-    @classmethod
     @data_validator(select_related=["fkey"])
+    @classmethod
     def useless_select_related(cls):
         """ test select_related with classmethod doesn't raise error
             (even if it does nothing)
