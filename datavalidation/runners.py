@@ -1,7 +1,14 @@
+from collections import Counter
 from datetime import datetime
 from typing import (
     Dict, Generator, List, Optional, Tuple, Type, Set, Any
 )
+try:
+    from time import time_ns as timer
+    TIME_UNIT = int(1e9)
+except ImportError:
+    from time import time as timer
+    TIME_UNIT = 1
 
 from django.core.exceptions import ObjectDoesNotExist, FieldError
 from django.db import models, transaction
@@ -84,14 +91,17 @@ class ResultHandlerMixin:
         """
         summary = summary.complete()
         extra_args = summary.exception_info_dict
-        if summary.status == Status.PASSING:
-            extra_args["last_run_time"] = datetime.now()
-
         validator_id = valinfo.get_validator_id()
+        if summary.execution_time is not None:
+            execution_time = summary.execution_time / TIME_UNIT
+        else:
+            execution_time = None
         Validator.objects.filter(id=validator_id).update(
             status=summary.status,
             num_passing=summary.num_passing,
             num_na=summary.num_na,
+            last_run_time=datetime.now(),
+            execution_time=execution_time,
             **extra_args,
         )
 
@@ -200,10 +210,13 @@ class InstanceMethodRunner(ResultHandlerMixin):
         """
         # noinspection PyBroadException
         try:
+            t0 = timer()
             retval = valinfo.instance_method(obj)
+            execution_time = timer() - t0
             exinfo = None
         except Exception:
             retval = None
+            execution_time = None
             exinfo = ExceptionInfoMixin.get_exception_info()
 
         result, exinfo, allowed_to_fail = self.handle_return_value(
@@ -219,6 +232,10 @@ class InstanceMethodRunner(ResultHandlerMixin):
                 summary.num_allowed_to_fail += 1
         elif result is NA:
             summary.num_na += 1
+
+        if execution_time is not None:
+            summary.execution_time += execution_time
+
         return exinfo
 
     def get_related_lookups(self) -> Tuple[Set[str], Set[str]]:
@@ -310,8 +327,10 @@ class ClassMethodRunner(ResultHandlerMixin):
         """ run a given class-method validator and hande the result """
         # noinspection PyBroadException
         try:
+            t0 = timer()
             retval = valinfo.class_method(self.model)
             summary = SummaryEx.from_return_value(retval)
+            summary.execution_time = timer() - t0
         except Exception:
             exinfo = ExceptionInfoMixin.get_exception_info()
             summary = SummaryEx.from_exception_info(exinfo)
@@ -393,24 +412,25 @@ class ObjectValidationRunner(ResultHandlerMixin):
             predicate=lambda valinfo: valinfo.instance_method is not None
         )
 
-    def run(self, class_methods: bool = True) -> bool:
+    def run(self, class_methods: bool = True) -> Tuple[int, int, int]:
         """ run validation for specified object
 
          Args:
             class_methods: if True then also re-run the (non-overloaded)
                 class methods on the model.
 
-         :returns: True if there was no validation erros
+         :returns: a tuple of the number passing (or na), the number
+            failing, and the number of exceptions
         """
         validator_ids = [v.get_validator_id() for v in self.instancemethod_infos]
         FailingObject.all_objects.filter(
             validator_id__in=validator_ids, object_pk=self.obj.pk
         ).update(is_valid=False)
 
-        instance_result = all([
+        instance_results = [
             self.run_for_object(valinfo)
             for valinfo in self.instancemethod_infos
-        ])
+        ]
 
         qs = FailingObject.all_objects.filter(
             validator_id__in=validator_ids,
@@ -426,14 +446,17 @@ class ObjectValidationRunner(ResultHandlerMixin):
         else:
             class_results = {}
 
-        if not instance_result:
-            return False
+        results = Counter()
+        for result in instance_results:
+            results[result] += 1
         for summary in class_results.values():
-            if summary.status != Status.PASSING:
-                return False
-        return True
+            results[summary.status] += 1
 
-    def run_for_object(self, valinfo: ValidatorInfo) -> bool:
+        keys = (Status.PASSING, Status.FAILING, Status.EXCEPTION)
+        assert set(results.keys()) <= set(keys), f"unknown status {results.keys()!s}"
+        return tuple(results[key] for key in keys)  # noqa
+
+    def run_for_object(self, valinfo: ValidatorInfo) -> Status:
         """ run a validator for a single object
 
          :returns: True if there was no validation error
@@ -452,12 +475,12 @@ class ObjectValidationRunner(ResultHandlerMixin):
 
         self.update_validator(valinfo, result, exinfo)
 
-        if result is PASS or result is NA:
-            return True
+        if result is PASS or result is NA or (result is FAIL and allowed_to_fail):
+            return Status.PASSING
         elif result is FAIL:
-            return allowed_to_fail
+            return Status.FAILING
         elif result is EXCEPTION:
-            return False
+            return Status.EXCEPTION
         else:
             raise RuntimeError("that's.. impossible!")
 

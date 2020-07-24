@@ -69,7 +69,7 @@ def test_returning_list_of_model_ids(num_failing, num_na):
 def test_returning_summary():
     summary = run_validator(CReturnValues, "returning_summary")
     assert summary == SummaryEx.from_summary(Summary(
-        num_passing=10, num_na=11, failures=[1]
+        num_passing=20, num_na=0, failures=[]
     )).complete()
 
 

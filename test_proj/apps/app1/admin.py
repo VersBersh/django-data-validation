@@ -1,3 +1,4 @@
+from datavalidation.admin import DataValidationMixin
 from django.contrib import admin
 
 from .models import (
@@ -10,25 +11,25 @@ from .models import (
 
 
 @admin.register(TestModel)
-class TestModelAdmin(admin.ModelAdmin):
+class TestModelAdmin(DataValidationMixin, admin.ModelAdmin):
     pass
 
 
 @admin.register(CReturnValues)
-class CReturnValuesAdmin(admin.ModelAdmin):
+class CReturnValuesAdmin(DataValidationMixin, admin.ModelAdmin):
     pass
 
 
 @admin.register(IReturnValues)
-class IReturnValuesAdmin(admin.ModelAdmin):
+class IReturnValuesAdmin(DataValidationMixin, admin.ModelAdmin):
     pass
 
 
 @admin.register(RelatedFields)
-class RelatedFieldsAdmin(admin.ModelAdmin):
+class RelatedFieldsAdmin(DataValidationMixin, admin.ModelAdmin):
     pass
 
 
 @admin.register(ModelWithExcludedParent)
-class ModelWithExcludedParentAdmin(admin.ModelAdmin):
+class ModelWithExcludedParentAdmin(DataValidationMixin, admin.ModelAdmin):
     pass

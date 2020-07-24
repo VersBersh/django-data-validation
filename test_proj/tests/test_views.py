@@ -81,7 +81,6 @@ def test_rest_api_validator_list(auth_client):
         if validator["method_name"] != method_name:
             continue
 
-        assert validator["is_class_method"] is False
         assert validator["description"] == "test that foobar is less than 10"
         assert validator["num_passing"] == TestModel.objects.count()
         assert validator["num_failing"] == 0

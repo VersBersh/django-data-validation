@@ -1,9 +1,10 @@
 from datavalidation import data_validator, PASS, FAIL, NA, Summary
+from datavalidation.models import DataValidationMixin
 
 from .base import BaseModel
 
 
-class CReturnValues(BaseModel):
+class CReturnValues(DataValidationMixin, BaseModel):
     """ Class Method Data Validator Return Values
 
     tests: valid return values for class method validators
@@ -44,9 +45,9 @@ class CReturnValues(BaseModel):
     @classmethod
     def returning_summary(cls):
         return Summary(
-            num_passing=10,
-            num_na=11,
-            failures=[1]
+            num_passing=cls.objects.filter(foobar__lt=10).count(),
+            num_na=cls.objects.filter(foobar__isnull=True).count(),
+            failures=cls.objects.filter(foobar__gte=10)
         )
 
     @data_validator

@@ -7,7 +7,7 @@ import {docco} from "react-syntax-highlighter/dist/esm/styles/hljs";
 import {Status} from "../data/enums";
 import {IValidator} from "../data/interfaces";
 import {StatusIcon, getStatusColour} from "./status";
-import {parseDate, formatDate} from "../utils";
+import {parseDate, formatDate, formatSeconds} from "../utils";
 import {FailingObjectList} from "./failing-object-list";
 import {Dispatch, SetStateAction} from "react";
 
@@ -21,9 +21,9 @@ interface IValidatorEx extends IValidator {
 export const Validator: React.FC<IValidatorEx> = ({
     id,
     method_name,
-    is_class_method,
     description,
     last_run_time,
+    execution_time,
     status,
     num_passing,
     num_failing,
@@ -56,25 +56,16 @@ export const Validator: React.FC<IValidatorEx> = ({
 
     const cursor = exc_traceback || ((num_failing || 0) > 0) ? "pointer" : "default"
 
-    const styledMethodName = () => {
-        return (
-            <>
-            <span>{method_name}</span> { is_class_method &&
-                <span style={{fontWeight: "normal", color: "blue"}}> [classmethod] </span>
-            }
-            </>
-        );
-    }
-
     return (
         <Accordian defaultActiveKey="" style={{marginBottom: "10px"}}>
             <Accordian.Toggle as="div" eventKey="0" className="vertical-align" style={{cursor, ...style}}>
                 <table style={{width: "100%", tableLayout: "fixed"}}>
                 <tbody>
                     <tr style={{verticalAlign: "middle", fontSize: "11pt", fontWeight: 600}}>
-                        <td className="no-overflow" style={wide} title={method_name}> {styledMethodName()} </td>
-                        <td style={{fontSize: "10pt", fontWeight: "normal", ...col2}}> {last_run_time_fmt} </td>
+                        <td className="no-overflow" style={wide} title={method_name}> {method_name} </td>
                         <td rowSpan={2} style={{width: "5%"}}> <StatusIcon status={status} onDark={false} /> </td>
+                        <td style={{fontSize: "10pt", fontWeight: "normal", ...col2}}> {last_run_time_fmt} </td>
+                        <td style={{fontSize: "10pt", fontWeight: "normal", ...thin}}> {formatSeconds(execution_time)} </td>
                         {!isException &&
                         <>
                             <td style={thin}>{num_passing}</td>
@@ -101,7 +92,8 @@ export const Validator: React.FC<IValidatorEx> = ({
 
                     <tr className="small-text" style={{verticalAlign: "top"}}>
                         <td style={wide}>{description}</td>
-                        <td style={col2}>last successful run time</td>
+                        <td style={col2}>last run time</td>
+                        <td style={thin}>execution time (s)</td>
                         {!isException &&
                         <>
                             <td style={thin}>passing</td>
@@ -135,7 +127,7 @@ export const Validator: React.FC<IValidatorEx> = ({
 
 
 const style: React.CSSProperties = {
-    padding: "10px",
+    padding: "10px 0",
     background: "#fff",
     fontWeight: 500,
     fontSize: "14pt",
@@ -149,7 +141,7 @@ const wide: React.CSSProperties = {
 }
 
 const col2: React.CSSProperties = {
-    width: "15%",
+    width: "10%",
 }
 
 const thin: React.CSSProperties = {

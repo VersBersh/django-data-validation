@@ -53,9 +53,8 @@ class BaseModel(models.Model):
          this ensures that any model that inherits BaseModel has at least
          one data_validator (otherwise it will not be added to REGISTRY)
         """
-        return self.foobar < 10 if self.foobar else NA
+        return self.foobar < 10 if self.foobar is not None else NA
 
 
 class TestModel(BaseModel):
     __test__ = False
-    pass

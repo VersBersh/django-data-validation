@@ -104,12 +104,12 @@ class DataValidationMixin(_Base):
         assert request.method == "POST"
         assert obj is not None
         try:
-            result = ObjectValidationRunner(obj).run(class_methods=True)
+            _, failing, exception = ObjectValidationRunner(obj).run(class_methods=True)
         except RegistryKeyError:
             # the model has no validators. Adding DataValidationMixin to
             # the admin provides no benefit, but it shouldn't crash
-            result = True
-        if not result:
+            failing, exception = 0, 0
+        if failing != 0:
             post: QueryDict = request.POST.copy()  # noqa
             post.pop("_save", None)
             post["_continue"] = ["Save and continue editing"]
@@ -118,6 +118,12 @@ class DataValidationMixin(_Base):
                 request,
                 message=mark_safe("this object failed data validation"),
                 level=messages.WARNING
+            )
+        elif exception != 0:
+            self.message_user(
+                request,
+                message=mark_safe("one or more data validators hit an exception"),
+                level=messages.ERROR
             )
 
     def response_change(self, request: HttpRequest, obj: models.Model):

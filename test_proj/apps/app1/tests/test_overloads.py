@@ -82,7 +82,7 @@ def test_object_runner(caplog):
     """
     obj = Overloaded.objects.first()
     result = ObjectValidationRunner(obj).run(class_methods=True)
-    assert result is True
+    assert result == (3, 0, 0)
     messages = [
         message for name, level, message in caplog.record_tuples
         if name == "app1.models.overloads"

@@ -1,3 +1,9 @@
-# from django.contrib import admin
+from datavalidation.admin import DataValidationMixin
+from django.contrib import admin
 
-# Register your models here.
+from .models import SecondDatabase
+
+
+@admin.register(SecondDatabase)
+class SecondDatabaseAdmin(DataValidationMixin, admin.ModelAdmin):
+    pass

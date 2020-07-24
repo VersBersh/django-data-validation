@@ -46,7 +46,6 @@ class ValidatorInfo:
             model_name=self.model_info.model_name,
             method_name=self.method_name,
             defaults={
-                "is_class_method": self.class_method is not None,
                 "description": self.description,
             }
         )

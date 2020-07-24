@@ -1,4 +1,3 @@
-import * as React from 'react';
 
 
 /** remove leading '/' from a string */
@@ -70,6 +69,19 @@ export function formatDate(date: Date, formatStr: string): string {
 }
 
 
+/** format number of seconds as hh:mm:ss */
+export function formatSeconds(seconds: number | null): string {
+    if (seconds === null) {
+        return "N/A"
+    }
+    let hrs = leftPad(Math.floor(seconds / 3600).toString(), 2);
+    let rem = seconds % 3600;
+    let min = leftPad(Math.floor(rem / 60).toString(), 2);
+    let sec = leftPad((rem % 60).toFixed(1), 4)
+    return `${hrs}:${min}:${sec}s`;
+}
+
+
 /** implementation of pythons collections.defaultdict */
 export class DefaultDict<T extends string | number, U> extends Map<T, U> {
     defaultFactory: () => U;
@@ -89,7 +101,3 @@ export class DefaultDict<T extends string | number, U> extends Map<T, U> {
         }
     }
 }
-
-
-
-

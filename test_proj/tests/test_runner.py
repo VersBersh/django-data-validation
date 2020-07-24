@@ -58,14 +58,14 @@ def test_object_runner():
 
     obj_pass = TestModel.objects.first()
     result = ObjectValidationRunner(obj_pass).run()
-    assert result is True
+    assert result == (1, 0, 0)
 
     validator.refresh_from_db()
     assert validator.status == Status.PASSING
 
     obj_fail, = TestModel.objects.generate(failing=1)
     result = ObjectValidationRunner(obj_fail).run()
-    assert result is False
+    assert result == (0, 1, 0)
 
     validator.refresh_from_db()
     assert validator.status == Status.FAILING

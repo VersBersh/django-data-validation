@@ -65,9 +65,9 @@ class Validator(ExceptionInfoMixin, models.Model):
     model_name = models.CharField(max_length=100)
     method_name = models.CharField(max_length=100)
     description = models.TextField(max_length=MAX_DESCRIPTION_LEN)
-    is_class_method = models.BooleanField()
 
     last_run_time = models.DateTimeField(blank=True, null=True)
+    execution_time = models.FloatField(blank=True, null=True)
     status = enumfields.EnumIntegerField(Status, default=Status.UNINITIALIZED)
     num_passing = models.PositiveIntegerField(blank=True, null=True)
     num_na = models.PositiveIntegerField(blank=True, null=True)
@@ -89,8 +89,11 @@ class Validator(ExceptionInfoMixin, models.Model):
     @classmethod
     def get_status_for_model(cls, model: Type[models.Model]) -> Status:
         """ return the datavalidation status for the model """
-        ct = ContentType.objects.get_for_model(model._meta.model)
-        statuses = cls.objects.filter(content_type=ct).values_list("status", flat=True)
+        app_label = model._meta.app_label
+        model_name = model.__name__
+        statuses = cls.objects \
+                      .filter(app_label=app_label, model_name=model_name) \
+                      .values_list("status", flat=True)
         model_status: Status = Status.UNINITIALIZED
         for status in statuses:
             if status == Status.PASSING and model_status == Status.UNINITIALIZED:
@@ -180,7 +183,7 @@ else:
 
 class DataValidationMixin(_Base):
     @property
-    def datavalidaiton_results(self) -> QuerySet:
+    def datavalidation_results(self) -> QuerySet:
         """ returns the FailingObjects for a given object """
         return FailingObject.get_for_object(self)
 

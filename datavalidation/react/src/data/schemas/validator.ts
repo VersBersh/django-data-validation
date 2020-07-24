@@ -2,8 +2,8 @@ import Ajv from "ajv";
 import {IValidator} from "../interfaces";
 
 import {
-    bool, integer, string, optional_integer, optional_string,
-    ValidationError,
+    integer, string, optional_integer, optional_string,
+    optional_number, ValidationError,
 } from "./utils";
 
 
@@ -21,8 +21,8 @@ const schema = {
                 "model_name": string,
                 "method_name": string,
                 "description": string,
-                "is_class_method": bool,
                 "last_run_time": optional_string,
+                "execution_time": optional_number,
                 "status": integer,
                 "num_passing": optional_integer,
                 "num_failing": optional_integer,

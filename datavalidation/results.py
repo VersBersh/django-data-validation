@@ -40,19 +40,23 @@ class Result:
 
 
 class PASS(Result):
-    pass
+    def __bool__(self):
+        return True
 
 
 class FAIL(Result):
-    pass
+    def __bool__(self):
+        return False
 
 
 class NA(Result):
-    pass
+    def __bool__(self):
+        return True
 
 
 class EXCEPTION(Result):
-    pass
+    def __bool__(self):
+        return False
 
 
 @dataclass
@@ -107,6 +111,7 @@ class SummaryEx(Summary, ExceptionInfo):
     status: Status = Status.UNINITIALIZED
     failures: Union[QuerySet, List[Model], List[int], None] = field(default_factory=list)
     num_allowed_to_fail: Optional[int] = 0
+    execution_time: Optional[int] = 0
 
     TYPE_ERROR_MESSAGES = {
         "num_passing": "Summary.num_passing must be an int",
@@ -124,6 +129,8 @@ class SummaryEx(Summary, ExceptionInfo):
                 if val is not None:
                     if sorted(list(val)) != sorted(list(other.failures)):
                         return False
+            elif prop == "execution_time":
+                continue
             elif val != getattr(other, prop):
                 return False
         return True
@@ -208,6 +215,7 @@ class SummaryEx(Summary, ExceptionInfo):
             for attr in attrs:
                 setattr(self, attr, None)
             self.failures = None
+            self.execution_time = None
             return self
         else:
             self.failures = self.get_failure_pks()
