@@ -61,8 +61,12 @@ class BaseDataValidationInline(GenericTabularInline):
     }
 
     @staticmethod
-    def description(obj: FailingObject) -> str:
-        return obj.validator.description
+    def _description(obj: FailingObject) -> str:
+        return mark_safe(obj.validator.description)
+
+    @staticmethod
+    def _comment(obj: FailingObject) -> str:
+        return mark_safe(obj.comment)
 
 
 class DataValidationFailureInline(BaseDataValidationInline):
@@ -70,8 +74,8 @@ class DataValidationFailureInline(BaseDataValidationInline):
     html_classes = "datavalidation-inline datavalidation-failure"
     verbose_name = "Data Validation Failure"
     verbose_name_plural = "Data Validation Failures"
-    fields = ("description", "comment", "allowed_to_fail", "allowed_to_fail_justification")
-    readonly_fields = ("description", "comment")
+    fields = ("_description", "_comment", "allowed_to_fail", "allowed_to_fail_justification")
+    readonly_fields = ("_description", "_comment")
 
 
 class DataValidationExceptionInline(BaseDataValidationInline):
@@ -79,8 +83,8 @@ class DataValidationExceptionInline(BaseDataValidationInline):
     html_classes = "datavalidation-inline datavalidation-exception"
     verbose_name = "Data Validation Exception"
     verbose_name_plural = "Data Validation Exceptions"
-    fields = ("description", "comment")
-    readonly_fields = ("description", "comment")
+    fields = ("_description", "_comment")
+    readonly_fields = ("_description", "_comment")
 
 
 if TYPE_CHECKING:
