@@ -223,7 +223,7 @@ def update_registry():
             # read the description from the doc string
             docstring = inspect.getdoc(validator)
             if docstring:
-                description = docstring.split("\n\n")[0].strip()
+                description = docstring.split("\n\n")[0].strip().replace("\n", "")
             else:
                 description = method_name.replace("_", " ")
 
