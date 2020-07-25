@@ -8,11 +8,12 @@
 DJANGO-DATA-VALIDATION
 ++++++++++++++++++++++
 
+.. image:: https://badge.fury.io/py/django-data-validation.svg
+    :target: https://pypi.org/project/django-data-validation/
+
 .. image:: https://readthedocs.org/projects/django-data-validation/badge/?version=latest
    :target: https://django-data-validation.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
-
-** :warning: this app is still in alpha. expect breaking changes :warning: **
 
 A Django app to manage the validation of your data. Inspired by `django-data-tests <https://github.com/andrewbird2/django-data-tests>`_
 
@@ -53,17 +54,11 @@ Requirements
 Installation
 ------------
 
-clone the repo
+installing with pip
 
 .. code-block:: bash
 
-    git clone https://github.com/VersBersh/django-data-validation.git
-
-change to the django-data-validation directory and install with pip
-
-.. code-block:: bash
-
-    pip install .
+    pip install django-data-validation
 
 In your project, add :py:`rest_framework` and :py:`datavalidation` to :py:`INSTALLED_APPS`
 
