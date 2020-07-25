@@ -81,9 +81,38 @@ class ResultHandlerMixin:
         return result, exinfo, allowed_to_fail
 
     @staticmethod
+    def update_failing_objects(valinfo: ValidatorInfo,
+                               summary: SummaryEx
+                               ) -> SummaryEx:
+        """ add the failures to the FailingObject table """
+        validator_id = valinfo.get_validator_id()
+        summary.complete()
+        if summary.failures is None:
+            return summary
+
+        with transaction.atomic():
+            for object_pks in chunk(summary.failures, 1000):
+                qs_update = FailingObject.all_objects.filter(
+                    validator_id=validator_id,
+                    object_pk__in=object_pks
+                ).select_for_update()
+                qs_update.update(is_valid=True, is_exception=False, comment="")
+                pks_updated = qs_update.values_list("object_pk", flat=True)
+                objects_to_create = [
+                    FailingObject(validator_id=validator_id,
+                                  content_type_id=valinfo.model_info.get_content_type_id(),
+                                  object_pk=pk,
+                                  is_exception=False,
+                                  comment="",
+                                  is_valid=True)
+                    for pk in set(object_pks) - set(pks_updated)
+                ]
+                FailingObject.objects.bulk_create(objects_to_create)
+        return summary
+
+    @staticmethod
     def handle_summary(valinfo: ValidatorInfo,
-                       summary: SummaryEx,
-                       skip_failures: bool = False
+                       summary: SummaryEx
                        ) -> SummaryEx:
         """ handle the Validation Summary
 
@@ -91,12 +120,12 @@ class ResultHandlerMixin:
         """
         summary = summary.complete()
         extra_args = summary.exception_info_dict
-        validator_id = valinfo.get_validator_id()
         if summary.execution_time is not None:
             execution_time = summary.execution_time / TIME_UNIT
         else:
             execution_time = None
-        Validator.objects.filter(id=validator_id).update(
+
+        Validator.objects.filter(id=valinfo.get_validator_id()).update(
             status=summary.status,
             num_passing=summary.num_passing,
             num_na=summary.num_na,
@@ -105,27 +134,6 @@ class ResultHandlerMixin:
             **extra_args,
         )
 
-        # if failures were supplied then update the ValidationResult table
-        if summary.failures is not None and not skip_failures:
-            with transaction.atomic():
-                for object_pks in chunk(summary.failures, 1000):
-                    qs_update = FailingObject.all_objects.filter(
-                        validator_id=validator_id,
-                        object_pk__in=object_pks
-                    ).select_for_update()
-                    qs_update.update(is_valid=True, is_exception=False, comment="")
-                    pks_updated = qs_update.values_list("object_pk", flat=True)
-                    objects_to_create = [
-                        FailingObject(validator_id=validator_id,
-                                      content_type_id=valinfo.model_info.get_content_type_id(),
-                                      object_pk=pk,
-                                      is_exception=False,
-                                      comment="",
-                                      is_valid=True)
-                        for pk in set(object_pks) - set(pks_updated)
-                    ]
-                    FailingObject.objects.bulk_create(objects_to_create)
-
         return summary
 
 
@@ -133,13 +141,13 @@ class InstanceMethodRunner(ResultHandlerMixin):
     def __init__(self,
                  model: Type[models.Model],
                  validator_infos: List[ValidatorInfo]):
-        super().__init__()
         self.model = model
         self.model_info = REGISTRY[model]
         self.validator_infos = validator_infos
         assert all(v.instance_method is not None for v in self.validator_infos)
         self._summaries = {info: SummaryEx() for info in self.validator_infos}
         self.summaries: Dict[ValidatorInfo, SummaryEx] = {}
+        self._time = None
 
     def run(self, show_progress: bool) -> Dict[ValidatorInfo, SummaryEx]:
         """ run all instance-method data validators against all objects
@@ -173,9 +181,7 @@ class InstanceMethodRunner(ResultHandlerMixin):
         for valinfo, summary in self._summaries.items():
             # skip_failures because we already created the FailingObjects
             # in the call to handle_result
-            self.summaries[valinfo] = self.handle_summary(
-                valinfo, summary, skip_failures=True
-            )
+            self.summaries[valinfo] = self.handle_summary(valinfo, summary)
 
         return self.summaries
 
@@ -187,6 +193,7 @@ class InstanceMethodRunner(ResultHandlerMixin):
 
          :returns: the list of ValidatorInfos that did not hit an exception
         """
+        self._time = timer()
         for valinfo in valinfos:
             exinfo = self.run_validator_for_object(valinfo, obj)
             if exinfo is None:
@@ -196,9 +203,7 @@ class InstanceMethodRunner(ResultHandlerMixin):
                 self._summaries.pop(valinfo)
                 exinfo.exc_obj_pk = obj.pk
                 summary = SummaryEx.from_exception_info(exinfo)
-                self.summaries[valinfo] = self.handle_summary(
-                    valinfo, summary, skip_failures=True
-                )
+                self.summaries[valinfo] = self.handle_summary(valinfo, summary)
 
     def run_validator_for_object(self,
                                  valinfo: ValidatorInfo,
@@ -210,13 +215,10 @@ class InstanceMethodRunner(ResultHandlerMixin):
         """
         # noinspection PyBroadException
         try:
-            t0 = timer()
             retval = valinfo.instance_method(obj)
-            execution_time = timer() - t0
             exinfo = None
         except Exception:
             retval = None
-            execution_time = None
             exinfo = ExceptionInfoMixin.get_exception_info()
 
         result, exinfo, allowed_to_fail = self.handle_return_value(
@@ -233,7 +235,9 @@ class InstanceMethodRunner(ResultHandlerMixin):
         elif result is NA:
             summary.num_na += 1
 
-        if execution_time is not None:
+        t = timer()
+        execution_time, self._time = t - self._time, t
+        if summary.execution_time is not None:
             summary.execution_time += execution_time
 
         return exinfo
@@ -326,15 +330,16 @@ class ClassMethodRunner(ResultHandlerMixin):
     def run_validator(self, valinfo: ValidatorInfo) -> None:
         """ run a given class-method validator and hande the result """
         # noinspection PyBroadException
+        t0 = timer()
         try:
-            t0 = timer()
             retval = valinfo.class_method(self.model)
             summary = SummaryEx.from_return_value(retval)
-            summary.execution_time = timer() - t0
-        except Exception:
+        except Exception:  # noqa
             exinfo = ExceptionInfoMixin.get_exception_info()
             summary = SummaryEx.from_exception_info(exinfo)
 
+        summary = self.update_failing_objects(valinfo, summary)
+        summary.execution_time = timer() - t0
         self.summaries[valinfo] = self.handle_summary(valinfo, summary)
 
 
