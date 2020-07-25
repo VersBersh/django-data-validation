@@ -9,19 +9,19 @@ with (Path(__file__).parent / "deps/pip.base").open("r") as f:
     REQUIREMENTS = f.read().splitlines()
 
 with (Path(__file__).parent / "README.rst").open("r") as f:
-    LONG_DESCRIPTION = f.read().splitlines()
+    LONG_DESCRIPTION = f.read()
 
 setup(
     name="django-data-validation",
-    version="0.0.1-alpha",
+    version="0.0.1",
     description=DESCRIPTION,
-    long_description=DESCRIPTION,
-    long_description_content_type="text/markdown",
+    long_description=LONG_DESCRIPTION,
+    long_description_content_type="text/x-rst",
     author="Oliver Chambers",
     author_email="django.data.validation@gmail.com",
     url="https://github.com/VersBersh/django-data-validation",
     packages=["datavalidation"],
-    python_requires=">=3.6.0",
+    python_requires="~=3.6.0",
     install_requires=REQUIREMENTS,
     include_package_data=True,
     license="MIT",

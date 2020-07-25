@@ -12,12 +12,10 @@ test:
 	(cd test_proj && python -m pytest)
 
 build: clean
-	python setup.py sdist
-	python setup.py bdist_wheel
+	python setup.py sdist bdist_wheel
 
-release: clean lint build
-	python setup.py sdist upload
-	python setup.py bdist_wheel upload
+release: clean lint test build
+	python -m twine upload dist/*
 
 # combine pip.base and pip.dev into one (gitignoted) requirements file because pycharm
 # can't handle two requirements files (n.b. $$ to escape $ in Make)

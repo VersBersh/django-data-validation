@@ -20,13 +20,13 @@ read the documentation: `<https://django-data-validation.readthedocs.io>`_
 
 write tests on your Django models and view the summary in the admin
 
-.. image:: screenshot.png
+.. image:: https://raw.githubusercontent.com/VersBersh/django-data-validation/master/screenshot.png
     :width: 100%
     :alt: screenshot of the admin page
 
 run the validation when adding/changing an object via django admin
 
-.. image:: screenshot2.png
+.. image:: https://raw.githubusercontent.com/VersBersh/django-data-validation/master/screenshot2.png
     :width: 100%
     :alt: screenshot of a default admin change form
 

@@ -1,11 +1,11 @@
 flake8
 ipython
 nodeenv
-numpy
 psycopg2
 pytest
 pytest-cov
 pytest-django
 PSphinxTheme
 sphinx
+twine
 wheel

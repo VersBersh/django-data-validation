@@ -1,5 +1,7 @@
 recursive-include datavalidation *
+recursive-exclude datavalidation *.pyc
 prune datavalidation/react
 prune datavalidation/node_modules
-prune datavalidation/static/datavalidation/dev
-prune datavalidation/templates/datavalidation/dev
+prune datavalidation/static/datavalidation/admin/dev
+prune datavalidation/templates/datavalidation/admin/dev
+include deps/pip.base
