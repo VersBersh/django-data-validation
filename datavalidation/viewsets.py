@@ -28,6 +28,7 @@ class FailingObjectViewSet(viewsets.ModelViewSet):
 class ValidatorViewSet(viewsets.ModelViewSet):
     serializer_class = ValidatorSerializer
     queryset = Validator.objects.prefetch_related("failing_objects")
+    pagination_class = None
     permission_classes = [
         permissions.IsAuthenticated
     ]
