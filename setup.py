@@ -21,7 +21,7 @@ setup(
     author_email="django.data.validation@gmail.com",
     url="https://github.com/VersBersh/django-data-validation",
     packages=["datavalidation"],
-    python_requires="~=3.6.0",
+    python_requires=">=3.6.0",
     install_requires=REQUIREMENTS,
     include_package_data=True,
     license="MIT",
